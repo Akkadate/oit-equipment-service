@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { RepairRequest, RepairStatus } from '@/types'
 import { repairStatusLabel, repairStatusColor } from '@/lib/equipment'
 import { RepairStatusUpdater } from './RepairStatusUpdater'
@@ -35,20 +35,96 @@ const TAB_CONFIG: { id: Tab; label: string; statuses: RepairStatus[]; activeClas
   },
 ]
 
+const LS_CAMPUS_KEY = 'oit_repair_campuses'
+
 export function RepairsList({ repairs }: Props) {
   const [tab, setTab] = useState<Tab>('pending')
+  const [selectedCampuses, setSelectedCampuses] = useState<string[] | null>(null)
+
+  // Extract unique campuses present in the data
+  const allCampuses = useMemo(() => {
+    const map = new Map<string, string>()
+    ;(repairs as any[]).forEach((r) => {
+      const campus = r.room?.building?.campus
+      if (campus?.id) map.set(campus.id, campus.name)
+    })
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'th'))
+  }, [repairs])
+
+  // Restore saved campus selection from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_CAMPUS_KEY)
+      if (saved) setSelectedCampuses(JSON.parse(saved))
+    } catch { /* ignore */ }
+  }, [])
+
+  // null = all campuses selected (default)
+  const effectiveSelected = selectedCampuses ?? allCampuses.map((c) => c.id)
+
+  function toggleCampus(id: string) {
+    setSelectedCampuses((prev) => {
+      const current = prev ?? allCampuses.map((c) => c.id)
+      const next = current.includes(id)
+        ? current.filter((x) => x !== id)
+        : [...current, id]
+      try { localStorage.setItem(LS_CAMPUS_KEY, JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  }
+
+  // Apply campus filter (skip if only one campus)
+  const campusFiltered: any[] =
+    allCampuses.length <= 1
+      ? (repairs as any[])
+      : (repairs as any[]).filter((r) => {
+          const campusId = r.room?.building?.campus?.id
+          return campusId && effectiveSelected.includes(campusId)
+        })
 
   const counts: Record<Tab, number> = {
-    pending: repairs.filter((r) => r.status === 'pending').length,
-    in_progress: repairs.filter((r) => r.status === 'in_progress').length,
-    done: repairs.filter((r) => r.status === 'resolved' || r.status === 'closed').length,
+    pending: campusFiltered.filter((r) => r.status === 'pending').length,
+    in_progress: campusFiltered.filter((r) => r.status === 'in_progress').length,
+    done: campusFiltered.filter((r) => r.status === 'resolved' || r.status === 'closed').length,
   }
 
   const activeStatuses = TAB_CONFIG.find((t) => t.id === tab)!.statuses
-  const shown = repairs.filter((r) => activeStatuses.includes(r.status))
+  const shown = campusFiltered.filter((r) => activeStatuses.includes(r.status))
 
   return (
     <div>
+      {/* Campus filter — only shown when more than one campus exists */}
+      {allCampuses.length > 1 && (
+        <div className="flex items-center gap-4 flex-wrap bg-white border rounded-xl px-4 py-3 mb-5">
+          <span className="text-xs font-semibold text-gray-500 shrink-0">วิทยาเขต</span>
+          {allCampuses.map((campus) => (
+            <label key={campus.id} className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={effectiveSelected.includes(campus.id)}
+                onChange={() => toggleCampus(campus.id)}
+                className="rounded accent-blue-600 w-4 h-4 cursor-pointer"
+              />
+              <span className="text-sm text-gray-700">{campus.name}</span>
+            </label>
+          ))}
+          {selectedCampuses !== null && effectiveSelected.length < allCampuses.length && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCampuses(null)
+                try { localStorage.removeItem(LS_CAMPUS_KEY) } catch { /* ignore */ }
+              }}
+              className="ml-auto text-xs text-blue-600 hover:underline shrink-0"
+            >
+              แสดงทั้งหมด
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Tab bar */}
       <div className="flex gap-2 mb-5 flex-wrap">
         {TAB_CONFIG.map((t) => (
@@ -92,6 +168,7 @@ export function RepairsList({ repairs }: Props) {
                       {repairStatusLabel[r.status]}
                     </span>
                     <span className="text-sm text-gray-500">
+                      {r.room?.building?.campus?.name && `${r.room.building.campus.name} · `}
                       {r.room?.building?.name} · ห้อง {r.room?.code}
                     </span>
                   </div>
