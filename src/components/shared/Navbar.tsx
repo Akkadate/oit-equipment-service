@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const navLinks = [
   { href: '/', label: 'Dashboard' },
@@ -18,14 +18,43 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [email, setEmail] = useState<string | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const [authUser, setAuthUser] = useState<any>(null)
+  const [showProfile, setShowProfile] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [savingName, setSavingName] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null)
+      if (data.user) {
+        setAuthUser(data.user)
+        setEditName(data.user.user_metadata?.full_name ?? '')
+      }
     })
   }, [])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowProfile(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  async function saveDisplayName() {
+    if (!editName.trim()) return
+    setSavingName(true)
+    const supabase = createClient()
+    const { data } = await supabase.auth.updateUser({ data: { full_name: editName.trim() } })
+    if (data.user) setAuthUser(data.user)
+    setSavingName(false)
+    setShowProfile(false)
+  }
 
   async function handleLogout() {
     const supabase = createClient()
@@ -33,6 +62,8 @@ export function Navbar() {
     router.push('/login')
     router.refresh()
   }
+
+  const displayName = authUser?.user_metadata?.full_name || authUser?.email || null
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
@@ -57,18 +88,64 @@ export function Navbar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        {email && (
-          <span className="text-xs text-gray-400 hidden sm:block">{email}</span>
-        )}
-        {email ? (
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="text-xs text-gray-500 hover:text-red-600 px-2 py-1 rounded border hover:border-red-200 hover:bg-red-50 transition-colors"
-          >
-            ออกจากระบบ
-          </button>
+      <div className="flex items-center gap-2">
+        {authUser ? (
+          <>
+            {/* Profile dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowProfile((v) => !v)}
+                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                  {(displayName ?? '?')[0].toUpperCase()}
+                </span>
+                <span className="hidden sm:block max-w-[140px] truncate">{displayName}</span>
+                <span className="text-gray-400">▾</span>
+              </button>
+
+              {showProfile && (
+                <div className="absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg p-4 w-64 z-50">
+                  <p className="text-[11px] text-gray-400 mb-1">{authUser.email}</p>
+                  <p className="text-xs font-medium text-gray-700 mb-2">ชื่อที่แสดงในระบบ</p>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && saveDisplayName()}
+                    placeholder="ชื่อ-นามสกุล เช่น สมชาย ใจดี"
+                    className="w-full border rounded-lg px-3 py-1.5 text-sm mb-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={saveDisplayName}
+                      disabled={savingName || !editName.trim()}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1.5 rounded-lg disabled:opacity-50 transition-colors"
+                    >
+                      {savingName ? 'บันทึก...' : 'บันทึกชื่อ'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowProfile(false)}
+                      className="text-xs px-3 py-1.5 rounded-lg border hover:bg-gray-50 transition-colors"
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs text-gray-500 hover:text-red-600 px-2 py-1 rounded border hover:border-red-200 hover:bg-red-50 transition-colors"
+            >
+              ออกจากระบบ
+            </button>
+          </>
         ) : (
           <Link
             href="/login"

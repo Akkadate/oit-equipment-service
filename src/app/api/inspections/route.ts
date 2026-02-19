@@ -20,7 +20,24 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  // Resolve inspected_by UUID → display name via auth admin API
+  const uniqueIds = [...new Set((data as any[]).map((r) => r.inspected_by).filter(Boolean))]
+  const nameMap: Record<string, string> = {}
+
+  if (uniqueIds.length > 0) {
+    const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+    for (const u of users) {
+      nameMap[u.id] = u.user_metadata?.full_name || u.email || u.id
+    }
+  }
+
+  const withNames = (data as any[]).map((r) => ({
+    ...r,
+    inspector_name: r.inspected_by ? (nameMap[r.inspected_by] ?? null) : null,
+  }))
+
+  return NextResponse.json(withNames)
 }
 
 export async function POST(req: NextRequest) {

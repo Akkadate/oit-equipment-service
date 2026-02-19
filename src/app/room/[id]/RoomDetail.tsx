@@ -151,6 +151,7 @@ export function RoomDetail({ equipment, repairs, inspections }: Props) {
                     <th className="px-4 py-2 text-left font-medium text-gray-600">อุปกรณ์</th>
                     <th className="px-4 py-2 text-left font-medium text-gray-600">สถานะ</th>
                     <th className="px-4 py-2 text-left font-medium text-gray-600">หมายเหตุ / รูป</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-600">ผู้ตรวจ</th>
                     <th className="px-4 py-2 text-left font-medium text-gray-600">วันที่ตรวจ</th>
                   </tr>
                 </thead>
@@ -173,6 +174,9 @@ export function RoomDetail({ equipment, repairs, inspections }: Props) {
                           </a>
                         )}
                         {!ins.comment && !ins.photo_url && <span className="text-gray-300">-</span>}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 text-xs">
+                        {ins.inspector_name ?? <span className="text-gray-300">-</span>}
                       </td>
                       <td className="px-4 py-3 text-gray-400 text-xs">
                         {new Date(ins.inspected_at).toLocaleString('th-TH')}
