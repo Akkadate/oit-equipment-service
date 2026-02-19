@@ -1,0 +1,27 @@
+# systemd service สำหรับ Next.js
+# คัดลอกไปที่: /etc/systemd/system/oit-equipment.service
+
+[Unit]
+Description=OIT Equipment Service (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/oit-equipment-service
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=5
+
+# Environment
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=/var/www/oit-equipment-service/.env.local
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=oit-equipment
+
+[Install]
+WantedBy=multi-user.target

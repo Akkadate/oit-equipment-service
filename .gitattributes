@@ -1,0 +1,9 @@
+# Normalize line endings
+* text=auto eol=lf
+
+# Shell scripts ต้องเป็น LF เสมอ (Linux server)
+*.sh text eol=lf
+
+# Windows-specific files
+*.bat text eol=crlf
+*.cmd text eol=crlf

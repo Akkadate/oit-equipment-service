@@ -33,6 +33,21 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Credentials & sensitive files (do not commit)
+supabase.md
+telegram.md
+
+# Claude Code project data
+.claude/
+
+# PWA generated service worker files (auto-generated on build)
+public/sw.js
+public/swe-worker-*.js
+public/workbox-*.js
+
+# Uploaded images (stored on server)
+public/uploads/
+
 # vercel
 .vercel
 
