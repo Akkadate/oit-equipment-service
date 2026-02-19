@@ -5,8 +5,10 @@ import { usePathname } from 'next/navigation'
 
 const navLinks = [
   { href: '/', label: 'Dashboard' },
-  { href: '/admin/equipment', label: 'อุปกรณ์' },
+  { href: '/admin/campuses', label: 'วิทยาเขต' },
+  { href: '/admin/buildings', label: 'อาคาร' },
   { href: '/admin/rooms', label: 'ห้องเรียน / QR' },
+  { href: '/admin/equipment', label: 'อุปกรณ์' },
   { href: '/admin/repairs', label: 'แจ้งซ่อม' },
 ]
 
