@@ -43,14 +43,14 @@ export function RepairsList({ repairs }: Props) {
 
   // Extract unique campuses present in the data
   const allCampuses = useMemo(() => {
-    const map = new Map<string, string>()
+    const map = new Map<string, { name: string; sort_order: number }>()
     ;(repairs as any[]).forEach((r) => {
       const campus = r.room?.building?.campus
-      if (campus?.id) map.set(campus.id, campus.name)
+      if (campus?.id) map.set(campus.id, { name: campus.name, sort_order: campus.sort_order ?? 99 })
     })
     return Array.from(map.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'th'))
+      .map(([id, { name, sort_order }]) => ({ id, name, sort_order }))
+      .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, 'th'))
   }, [repairs])
 
   // Restore saved campus selection from localStorage

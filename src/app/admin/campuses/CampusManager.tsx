@@ -7,6 +7,7 @@ interface Campus {
   id: string
   code: string
   name: string
+  sort_order: number
 }
 
 interface Props {
@@ -19,12 +20,14 @@ export function CampusManager({ campuses: initial }: Props) {
   const [editing, setEditing] = useState<Campus | null>(null)
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
+  const [sortOrder, setSortOrder] = useState('99')
   const [loading, setLoading] = useState(false)
 
   function openAdd() {
     setEditing(null)
     setCode('')
     setName('')
+    setSortOrder('99')
     setShowForm(true)
   }
 
@@ -32,6 +35,7 @@ export function CampusManager({ campuses: initial }: Props) {
     setEditing(c)
     setCode(c.code)
     setName(c.name)
+    setSortOrder(String(c.sort_order ?? 99))
     setShowForm(true)
   }
 
@@ -44,7 +48,7 @@ export function CampusManager({ campuses: initial }: Props) {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, name }),
+        body: JSON.stringify({ code, name, sort_order: Number(sortOrder) || 99 }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -52,10 +56,16 @@ export function CampusManager({ campuses: initial }: Props) {
       }
       const saved = await res.json()
       if (editing) {
-        setCampuses((prev) => prev.map((c) => (c.id === saved.id ? saved : c)))
+        setCampuses((prev) =>
+          prev
+            .map((c) => (c.id === saved.id ? saved : c))
+            .sort((a, b) => (a.sort_order ?? 99) - (b.sort_order ?? 99))
+        )
         toast.success('แก้ไขวิทยาเขตแล้ว')
       } else {
-        setCampuses((prev) => [...prev, saved])
+        setCampuses((prev) =>
+          [...prev, saved].sort((a, b) => (a.sort_order ?? 99) - (b.sort_order ?? 99))
+        )
         toast.success('เพิ่มวิทยาเขตแล้ว')
       }
       setShowForm(false)
@@ -114,6 +124,17 @@ export function CampusManager({ campuses: initial }: Props) {
                 required
               />
             </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">ลำดับแสดง</label>
+              <input
+                type="number"
+                min="1"
+                className="border rounded px-3 py-1.5 text-sm w-20"
+                placeholder="99"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              />
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -138,6 +159,7 @@ export function CampusManager({ campuses: initial }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
+              <th className="px-4 py-3 text-center font-medium text-gray-600 w-16">ลำดับ</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">รหัส</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">ชื่อวิทยาเขต</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">จัดการ</th>
@@ -146,13 +168,14 @@ export function CampusManager({ campuses: initial }: Props) {
           <tbody className="divide-y">
             {campuses.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
                   ยังไม่มีวิทยาเขต
                 </td>
               </tr>
             ) : (
               campuses.map((c) => (
                 <tr key={c.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-center text-gray-400 font-mono text-xs">{c.sort_order ?? 99}</td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{c.code}</td>
                   <td className="px-4 py-3 font-medium">{c.name}</td>
                   <td className="px-4 py-3">

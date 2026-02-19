@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     .select(`
       id, reported_by, reporter_phone, description, status, resolved_note, resolved_by, photo_url, created_at, updated_at,
       equipment:equipment ( id, name, asset_code ),
-      room:rooms ( id, code, name, building:buildings ( id, code, name, campus:campuses ( id, name ) ) )
+      room:rooms ( id, code, name, building:buildings ( id, code, name, campus:campuses ( id, name, sort_order ) ) )
     `)
     .order('created_at', { ascending: false })
 

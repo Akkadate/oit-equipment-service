@@ -26,6 +26,7 @@ export async function GET() {
         )
       )
     `)
+    .order('sort_order')
     .order('code')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

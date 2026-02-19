@@ -6,6 +6,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('campuses')
     .select('*')
+    .order('sort_order')
     .order('name')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   const body = await req.json()
   const { data, error } = await supabase
     .from('campuses')
-    .insert({ code: body.code, name: body.name })
+    .insert({ code: body.code, name: body.name, sort_order: body.sort_order ?? 99 })
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
