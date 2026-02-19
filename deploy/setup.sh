@@ -5,7 +5,7 @@
 set -e
 
 APP_DIR="/var/www/app/oit-equipment-service"
-DOMAIN="oitservice.norhbkk.ac.th"
+DOMAIN="oitservice.northbkk.ac.th"
 REQUIRED_NODE_MAJOR=18
 
 echo "=== OIT Equipment Service — Server Setup ==="
