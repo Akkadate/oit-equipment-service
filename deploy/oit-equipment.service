@@ -15,7 +15,7 @@ RestartSec=5
 
 # Environment
 Environment=NODE_ENV=production
-Environment=PORT=3000
+Environment=PORT=3001
 EnvironmentFile=/var/www/oit-equipment-service/.env.local
 
 # Logging
