@@ -19,7 +19,7 @@ export async function GET(
         )
       ),
       equipment (
-        id, name, asset_code, serial_number, note, installed_at,
+        id, name, asset_code, serial_number, note, installed_at, retired_at,
         equipment_type:equipment_types ( id, name ),
         equipment_inspections (
           id, status, comment, inspected_at, inspected_by
@@ -33,8 +33,8 @@ export async function GET(
     return NextResponse.json({ error: 'ไม่พบห้องนี้' }, { status: 404 })
   }
 
-  // Attach latest inspection to each equipment
-  const equipment = (room.equipment as any[]).map((eq) => {
+  // Attach latest inspection to each equipment, exclude retired items
+  const equipment = (room.equipment as any[]).filter((eq) => !eq.retired_at).map((eq) => {
     const sorted = [...eq.equipment_inspections].sort(
       (a: any, b: any) => new Date(b.inspected_at).getTime() - new Date(a.inspected_at).getTime()
     )

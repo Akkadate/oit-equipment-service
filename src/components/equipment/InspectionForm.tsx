@@ -6,11 +6,10 @@ import { Equipment, EquipmentStatus } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { PhotoCapture } from './PhotoCapture'
-import { statusLabel } from '@/lib/equipment'
 
 interface InspectionRow {
   equipment_id: string
-  status: EquipmentStatus
+  status: EquipmentStatus | null
   comment: string
   photo_url?: string
 }
@@ -27,11 +26,18 @@ const STATUS_OPTIONS: { value: EquipmentStatus; label: string; color: string }[]
   { value: 'pending_replacement', label: '🔴 รอเปลี่ยน', color: 'bg-red-100 text-red-800 border-red-300' },
 ]
 
+function initialStatus(latest: EquipmentStatus | undefined | null): EquipmentStatus | null {
+  // Keep damaged/pending_replacement as default so staff can see the known issue.
+  // For normal or unchecked, leave blank — staff must confirm themselves.
+  if (latest === 'damaged' || latest === 'pending_replacement') return latest
+  return null
+}
+
 export function InspectionForm({ equipment, roomId, token }: Props) {
   const [rows, setRows] = useState<InspectionRow[]>(
     equipment.map((eq) => ({
       equipment_id: eq.id,
-      status: (eq.latest_status as EquipmentStatus) ?? 'normal',
+      status: initialStatus(eq.latest_status),
       comment: '',
     }))
   )
@@ -56,13 +62,19 @@ export function InspectionForm({ equipment, roomId, token }: Props) {
     )
   }
 
+  const checkedRows = rows.filter((r) => r.status !== null)
+
   async function handleSubmit() {
+    if (checkedRows.length === 0) {
+      toast.error('กรุณาเลือกสถานะอย่างน้อย 1 รายการ')
+      return
+    }
     setSubmitting(true)
     try {
       const res = await fetch('/api/inspections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room_id: roomId, inspections: rows }),
+        body: JSON.stringify({ room_id: roomId, inspections: checkedRows }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -100,18 +112,12 @@ export function InspectionForm({ equipment, roomId, token }: Props) {
         const row = rows[i]
         return (
           <div key={eq.id} className="bg-white border rounded-xl p-4 space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-medium text-gray-900">{eq.name}</p>
-                <p className="text-xs text-gray-400 font-mono">{eq.asset_code}</p>
-                {(eq as any).equipment_type && (
-                  <p className="text-xs text-gray-500">{(eq as any).equipment_type.name}</p>
-                )}
-              </div>
-              {eq.latest_status && (
-                <span className="text-xs text-gray-400">
-                  เดิม: {statusLabel[eq.latest_status]}
-                </span>
+            {/* Equipment info */}
+            <div>
+              <p className="font-medium text-gray-900">{eq.name}</p>
+              <p className="text-xs text-gray-400 font-mono">{eq.asset_code}</p>
+              {(eq as any).equipment_type && (
+                <p className="text-xs text-gray-500">{(eq as any).equipment_type.name}</p>
               )}
             </div>
 
@@ -120,6 +126,7 @@ export function InspectionForm({ equipment, roomId, token }: Props) {
               {STATUS_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
                   onClick={() => setStatus(eq.id, opt.value)}
                   className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
                     row.status === opt.value
@@ -130,22 +137,25 @@ export function InspectionForm({ equipment, roomId, token }: Props) {
                   {opt.label}
                 </button>
               ))}
+              {row.status === null && (
+                <span className="text-xs text-gray-300 self-center">— ยังไม่เลือก</span>
+              )}
             </div>
 
-            {/* Comment */}
-            <Textarea
-              placeholder="หมายเหตุ (ถ้ามี)..."
-              value={row.comment}
-              onChange={(e) => setComment(eq.id, e.target.value)}
-              className="text-sm h-16 resize-none"
-            />
-
-            {/* Photo — แสดงเฉพาะถ้าสถานะไม่ปกติ */}
-            {row.status !== 'normal' && (
-              <PhotoCapture
-                equipmentId={eq.id}
-                onUploaded={(url) => setPhotoUrl(eq.id, url)}
-              />
+            {/* Comment + Photo — show whenever a status is selected */}
+            {row.status !== null && (
+              <>
+                <Textarea
+                  placeholder="หมายเหตุ (ถ้ามี)..."
+                  value={row.comment}
+                  onChange={(e) => setComment(eq.id, e.target.value)}
+                  className="text-sm h-16 resize-none"
+                />
+                <PhotoCapture
+                  equipmentId={eq.id}
+                  onUploaded={(url) => setPhotoUrl(eq.id, url)}
+                />
+              </>
             )}
           </div>
         )
@@ -153,11 +163,13 @@ export function InspectionForm({ equipment, roomId, token }: Props) {
 
       <Button
         onClick={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || checkedRows.length === 0}
         className="w-full"
         size="lg"
       >
-        {submitting ? 'กำลังบันทึก...' : `บันทึกผลตรวจสอบ (${equipment.length} รายการ)`}
+        {submitting
+          ? 'กำลังบันทึก...'
+          : `บันทึกผลตรวจสอบ (${checkedRows.length} / ${equipment.length} รายการ)`}
       </Button>
     </div>
   )
