@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,12 +24,19 @@ const emptyForm = {
   note: '',
 }
 
+const ALL = '__all__'
+
 export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
   const [items, setItems] = useState<any[]>(initial)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any | null>(null)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState(emptyForm)
+
+  // Search / filter state
+  const [search, setSearch] = useState('')
+  const [filterType, setFilterType] = useState(ALL)
+  const [filterRoom, setFilterRoom] = useState(ALL)
 
   function set(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -85,7 +92,6 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
         return
       }
 
-      // Re-fetch to get updated relations (room, equipment_type)
       const listRes = await fetch('/api/equipment')
       if (listRes.ok) setItems(await listRes.json())
 
@@ -113,12 +119,85 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
     toast.success(`จำหน่ายออก "${eq.name}" แล้ว`)
   }
 
+  // Filtered list (client-side)
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return items.filter((eq) => {
+      if (filterType !== ALL && String(eq.equipment_type?.id) !== filterType) return false
+      if (filterRoom !== ALL && eq.room?.id !== filterRoom) return false
+      if (q) {
+        const hay = [eq.name, eq.asset_code, eq.serial_number, eq.room?.code, eq.room?.building?.name]
+          .filter(Boolean).join(' ').toLowerCase()
+        if (!hay.includes(q)) return false
+      }
+      return true
+    })
+  }, [items, search, filterType, filterRoom])
+
+  const hasFilter = search || filterType !== ALL || filterRoom !== ALL
+
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <Button onClick={openAdd}>+ เพิ่มอุปกรณ์</Button>
+      {/* Toolbar */}
+      <div className="flex flex-wrap gap-3 items-center mb-4">
+        {/* Search */}
+        <input
+          type="search"
+          placeholder="ค้นหาชื่อ / รหัสทรัพย์สิน / Serial..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        {/* Filter by type */}
+        <select
+          title="กรองตามประเภทอุปกรณ์"
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value={ALL}>ทุกประเภท</option>
+          {types.map((t) => (
+            <option key={t.id} value={String(t.id)}>{t.name}</option>
+          ))}
+        </select>
+
+        {/* Filter by room */}
+        <select
+          title="กรองตามห้อง"
+          value={filterRoom}
+          onChange={(e) => setFilterRoom(e.target.value)}
+          className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value={ALL}>ทุกห้อง</option>
+          {rooms.map((r: any) => (
+            <option key={r.id} value={r.id}>{r.building?.code} · {r.code}</option>
+          ))}
+        </select>
+
+        {hasFilter && (
+          <button
+            type="button"
+            onClick={() => { setSearch(''); setFilterType(ALL); setFilterRoom(ALL) }}
+            className="text-xs text-gray-500 hover:text-red-600 px-2 py-1.5 rounded border hover:border-red-200"
+          >
+            ล้างตัวกรอง
+          </button>
+        )}
+
+        <div className="ml-auto">
+          <Button onClick={openAdd}>+ เพิ่มอุปกรณ์</Button>
+        </div>
       </div>
 
+      {/* Result count */}
+      {hasFilter && (
+        <p className="text-xs text-gray-500 mb-3">
+          แสดง {filtered.length} จาก {items.length} รายการ
+        </p>
+      )}
+
+      {/* Add / Edit Modal */}
       {open && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
@@ -171,7 +250,7 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>รหัสอุปกรณ์ <span className="text-red-500">*</span></Label>
+                  <Label>รหัสทรัพย์สิน <span className="text-red-500">*</span></Label>
                   <Input
                     placeholder="NBK-PJ-0001"
                     value={form.asset_code}
@@ -221,12 +300,13 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
         </div>
       )}
 
+      {/* Table */}
       <div className="bg-white rounded-xl border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-600">ชื่ออุปกรณ์</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">รหัส</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">รหัสทรัพย์สิน</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">ประเภท</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">ห้อง</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Serial</th>
@@ -235,14 +315,14 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {items.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                  ยังไม่มีอุปกรณ์
+                  {hasFilter ? 'ไม่พบรายการที่ตรงกับเงื่อนไข' : 'ยังไม่มีอุปกรณ์'}
                 </td>
               </tr>
             ) : (
-              items.map((eq: any) => (
+              filtered.map((eq: any) => (
                 <tr key={eq.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{eq.name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{eq.asset_code}</td>

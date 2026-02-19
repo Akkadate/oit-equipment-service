@@ -11,6 +11,7 @@ const navLinks = [
   { href: '/admin/buildings', label: 'อาคาร' },
   { href: '/admin/rooms', label: 'ห้องเรียน / QR' },
   { href: '/admin/equipment', label: 'อุปกรณ์' },
+  { href: '/admin/equipment-types', label: 'ประเภทอุปกรณ์' },
   { href: '/admin/repairs', label: 'แจ้งซ่อม' },
 ]
 
