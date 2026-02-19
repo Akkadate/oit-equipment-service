@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Equipment } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -19,12 +19,24 @@ interface SelectedEquipment {
   description: string
 }
 
+const LS_KEY = 'oit_reporter'
+
 export function RepairRequestForm({ equipment, roomId }: Props) {
   const [selected, setSelected] = useState<SelectedEquipment[]>([])
   const [reportedBy, setReportedBy] = useState('')
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [prefilled, setPrefilled] = useState(false)
+
+  // Load saved name/phone from localStorage on first render
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) ?? '{}')
+      if (saved.name) { setReportedBy(saved.name); setPrefilled(true) }
+      if (saved.phone) setPhone(saved.phone)
+    } catch { /* ignore */ }
+  }, [])
 
   function toggleEquipment(id: string) {
     setSelected((prev) =>
@@ -61,6 +73,11 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
     }
 
     setSubmitting(true)
+
+    // Save reporter info to localStorage for next time
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ name: reportedBy.trim(), phone: phone.trim() }))
+    } catch { /* ignore */ }
 
     // ออฟไลน์ → บันทึกลง queue แล้ว sync ทีหลัง
     if (!navigator.onLine) {
@@ -118,6 +135,7 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
           เจ้าหน้าที่จะดำเนินการโดยเร็วที่สุด
         </p>
         <button
+          type="button"
           onClick={() => { setSubmitted(false); setSelected([]); setReportedBy(''); setPhone('') }}
           className="mt-4 text-blue-600 text-sm hover:underline"
         >
@@ -179,14 +197,21 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
       {/* Reporter info */}
       <div className="space-y-4 bg-gray-50 rounded-xl p-4">
         <div className="space-y-1.5">
-          <Label htmlFor="reported_by">
-            ชื่อผู้แจ้ง <span className="text-red-500">*</span>
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="reported_by">
+              ชื่อผู้แจ้ง <span className="text-red-500">*</span>
+            </Label>
+            {prefilled && (
+              <span className="text-[11px] text-blue-500">
+                ✓ จำชื่อไว้ให้แล้ว
+              </span>
+            )}
+          </div>
           <Input
             id="reported_by"
             placeholder="ชื่อ-นามสกุล หรือ รหัสพนักงาน"
             value={reportedBy}
-            onChange={(e) => setReportedBy(e.target.value)}
+            onChange={(e) => { setReportedBy(e.target.value); setPrefilled(false) }}
             required
           />
         </div>

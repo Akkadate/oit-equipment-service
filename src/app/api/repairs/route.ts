@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('repair_requests')
     .select(`
-      id, reported_by, reporter_phone, description, status, resolved_note, created_at, updated_at,
+      id, reported_by, reporter_phone, description, status, resolved_note, resolved_by, created_at, updated_at,
       equipment:equipment ( id, name, asset_code ),
       room:rooms ( id, code, name, building:buildings ( id, code, name ) )
     `)

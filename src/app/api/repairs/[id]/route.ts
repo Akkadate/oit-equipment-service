@@ -7,12 +7,12 @@ export async function PUT(
 ) {
   const { id } = await params
   const body = await req.json()
-  const { status, resolved_note } = body
+  const { status, resolved_note, resolved_by } = body
 
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('repair_requests')
-    .update({ status, resolved_note, updated_at: new Date().toISOString() })
+    .update({ status, resolved_note, resolved_by: resolved_by ?? null, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()

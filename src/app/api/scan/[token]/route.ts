@@ -24,6 +24,10 @@ export async function GET(
         equipment_inspections (
           id, status, comment, inspected_at, inspected_by
         )
+      ),
+      repair_requests (
+        id, status, description, reported_by, reporter_phone, created_at,
+        equipment:equipment ( id, name )
       )
     `)
     .eq('qr_token', token)
@@ -47,5 +51,10 @@ export async function GET(
     }
   })
 
-  return NextResponse.json({ ...room, equipment })
+  // Active repairs (pending + in_progress) sorted oldest first
+  const activeRepairs = (room.repair_requests as any[])
+    .filter((r) => r.status === 'pending' || r.status === 'in_progress')
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+  return NextResponse.json({ ...room, equipment, active_repairs: activeRepairs })
 }

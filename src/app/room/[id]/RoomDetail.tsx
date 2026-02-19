@@ -119,8 +119,15 @@ export function RoomDetail({ equipment, repairs, inspections }: Props) {
                       {' · '}
                       {new Date(r.created_at).toLocaleDateString('th-TH')}
                     </p>
-                    {r.resolved_note && (
-                      <p className="text-green-600 text-xs mt-1">✓ {r.resolved_note}</p>
+                    {(r.resolved_note || r.resolved_by) && (
+                      <div className="mt-1 space-y-0.5">
+                        {r.resolved_by && (
+                          <p className="text-green-600 text-xs">✓ ดำเนินการโดย {r.resolved_by}</p>
+                        )}
+                        {r.resolved_note && (
+                          <p className="text-gray-500 text-xs">📝 {r.resolved_note}</p>
+                        )}
+                      </div>
                     )}
                   </div>
                   <span

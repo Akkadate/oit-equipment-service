@@ -1,12 +1,10 @@
 import Link from 'next/link'
 import { InspectionForm } from '@/components/equipment/InspectionForm'
+import { ActiveRepairsSection } from '@/components/equipment/ActiveRepairsSection'
 import { internalUrl } from '@/lib/equipment'
 
 async function getScanData(token: string) {
-  const res = await fetch(
-    internalUrl(`/api/scan/${token}`),
-    { cache: 'no-store' }
-  )
+  const res = await fetch(internalUrl(`/api/scan/${token}`), { cache: 'no-store' })
   if (!res.ok) return null
   return res.json()
 }
@@ -46,7 +44,10 @@ export default async function InspectPage({
         </div>
       </div>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-6 pb-10">
+        {/* Active repairs for this room — shown above inspection form */}
+        <ActiveRepairsSection repairs={data.active_repairs ?? []} />
+
         {data.equipment?.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
             ห้องนี้ยังไม่มีอุปกรณ์ในระบบ

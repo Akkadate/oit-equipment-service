@@ -103,10 +103,17 @@ export function RepairsList({ repairs }: Props) {
                     {' · '}
                     {new Date(r.created_at).toLocaleString('th-TH')}
                   </p>
-                  {r.resolved_note && (
-                    <p className="text-sm text-green-700 bg-green-50 rounded p-2 mt-2">
-                      📝 {r.resolved_note}
-                    </p>
+                  {(r.resolved_note || r.resolved_by) && (
+                    <div className="bg-green-50 rounded-lg p-2 mt-2 space-y-0.5">
+                      {r.resolved_by && (
+                        <p className="text-xs text-green-600 font-medium">
+                          ✓ ดำเนินการโดย {r.resolved_by}
+                        </p>
+                      )}
+                      {r.resolved_note && (
+                        <p className="text-sm text-green-700">📝 {r.resolved_note}</p>
+                      )}
+                    </div>
                   )}
                 </div>
                 <RepairStatusUpdater repairId={r.id} currentStatus={r.status} />
