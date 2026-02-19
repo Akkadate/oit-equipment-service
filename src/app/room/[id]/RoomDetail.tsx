@@ -19,6 +19,13 @@ export function RoomDetail({ equipment, repairs, inspections }: Props) {
 
   const activeRepairs = repairs.filter((r) => ACTIVE_STATUSES.has(r.status))
   const closedRepairs = repairs.filter((r) => !ACTIVE_STATUSES.has(r.status))
+
+  // Map of equipment_id → active repair count
+  const activeRepairCount = new Map<string, number>()
+  for (const r of activeRepairs) {
+    const eqId = r.equipment?.id
+    if (eqId) activeRepairCount.set(eqId, (activeRepairCount.get(eqId) ?? 0) + 1)
+  }
   const shownRepairs = repairTab === 'active' ? activeRepairs : closedRepairs
 
   const totalInspPages = Math.max(1, Math.ceil(inspections.length / INSP_PAGE))
@@ -52,11 +59,18 @@ export function RoomDetail({ equipment, repairs, inspections }: Props) {
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">{eq.asset_code}</td>
                     <td className="px-4 py-3 text-gray-500">{eq.equipment_type?.name}</td>
                     <td className="px-4 py-3">
-                      {eq.latest_status ? (
-                        <StatusBadge status={eq.latest_status} />
-                      ) : (
-                        <span className="text-gray-400 text-xs">ยังไม่ตรวจ</span>
-                      )}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {eq.latest_status ? (
+                          <StatusBadge status={eq.latest_status} />
+                        ) : (
+                          <span className="text-gray-400 text-xs">ยังไม่ตรวจ</span>
+                        )}
+                        {(activeRepairCount.get(eq.id) ?? 0) > 0 && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-700 border border-orange-200 whitespace-nowrap">
+                            🔧 แจ้งซ่อม
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-xs">
                       {eq.latest_inspected_at
