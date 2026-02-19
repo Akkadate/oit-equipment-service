@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const supabase = createServiceClient()
+  const { id } = await params
+  const { data, error } = await supabase
+    .from('rooms')
+    .select('id, code, name, floor, building:buildings(id, code, name, campus:campuses(id, name))')
+    .eq('id', id)
+    .single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+  return NextResponse.json(data)
+}
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = createServiceClient()
   const { id } = await params

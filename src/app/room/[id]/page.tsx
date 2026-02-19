@@ -4,6 +4,12 @@ import { RoomDetail } from './RoomDetail'
 
 export const dynamic = 'force-dynamic'
 
+async function getRoom(roomId: string) {
+  const res = await fetch(internalUrl(`/api/rooms/${roomId}`), { cache: 'no-store' })
+  if (!res.ok) return null
+  return res.json()
+}
+
 async function getEquipment(roomId: string) {
   const res = await fetch(internalUrl(`/api/equipment?roomId=${roomId}`), { cache: 'no-store' })
   if (!res.ok) return []
@@ -28,7 +34,8 @@ export default async function RoomDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [equipment, repairs, inspections] = await Promise.all([
+  const [room, equipment, repairs, inspections] = await Promise.all([
+    getRoom(id),
     getEquipment(id),
     getRepairs(id),
     getInspections(id),
@@ -49,8 +56,6 @@ export default async function RoomDetailPage({
     latest_inspected_at: latestInspMap.get(eq.id)?.inspected_at ?? null,
   }))
 
-  const roomInfo = (equipment[0] as any)?.room
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -58,15 +63,15 @@ export default async function RoomDetailPage({
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <span>{roomInfo?.building?.campus?.name}</span>
+            <span>{room?.building?.campus?.name}</span>
             <span>/</span>
-            <span>{roomInfo?.building?.name}</span>
+            <span>{room?.building?.name}</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900">
-            ห้อง {roomInfo?.code ?? id}
-            {roomInfo?.name && (
+            ห้อง {room?.code ?? id}
+            {room?.name && (
               <span className="text-base font-normal text-gray-500 ml-2">
-                — {roomInfo.name}
+                — {room.name}
               </span>
             )}
           </h1>
