@@ -1,6 +1,15 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { internalUrl } from '@/lib/equipment'
+
+function shortDate(iso: string) {
+  const d = new Date(iso)
+  const now = new Date()
+  const days = Math.floor((now.getTime() - d.getTime()) / 86400000)
+  if (days === 0) return 'วันนี้'
+  if (days === 1) return 'เมื่อวาน'
+  if (days < 7) return `${days} วันก่อน`
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+}
 
 async function getRoomByToken(token: string) {
   const res = await fetch(
@@ -40,8 +49,11 @@ export default async function ScanLandingPage({
     campus: data.building?.campus,
   }
 
+  const activeRepairs: any[] = data.active_repairs ?? []
+  const hasRepairs = activeRepairs.length > 0
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
+    <div className={`min-h-screen bg-gray-50 flex flex-col items-center px-4 ${hasRepairs ? 'py-8' : 'justify-center'}`}>
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border p-6 space-y-6">
         {/* Room info */}
         <div className="text-center">
@@ -81,6 +93,38 @@ export default async function ScanLandingPage({
           </Link>
         </div>
       </div>
+
+      {/* Active repairs — shown below the card when present */}
+      {hasRepairs && (
+        <div className="w-full max-w-sm mt-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-700">🔧 แจ้งซ่อมค้างอยู่</span>
+            <span className="bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+              {activeRepairs.length}
+            </span>
+          </div>
+          {activeRepairs.map((r) => (
+            <div key={r.id} className="bg-white border border-orange-100 rounded-xl p-3 shadow-sm">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    r.status === 'pending'
+                      ? 'bg-orange-100 text-orange-700'
+                      : 'bg-blue-100 text-blue-700'
+                  }`}
+                >
+                  {r.status === 'pending' ? 'รอดำเนินการ' : 'กำลังซ่อม'}
+                </span>
+                <span className="text-sm font-medium text-gray-800 truncate">{r.equipment?.name}</span>
+              </div>
+              <p className="text-sm text-gray-600">{r.description}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                แจ้งโดย {r.reported_by} · {shortDate(r.created_at)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

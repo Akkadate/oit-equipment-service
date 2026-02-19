@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { enqueueRepair } from '@/lib/offlineQueue'
+import { PhotoCapture } from './PhotoCapture'
 
 interface Props {
   equipment: Equipment[]
@@ -17,6 +18,7 @@ interface Props {
 interface SelectedEquipment {
   id: string
   description: string
+  photo_url?: string
 }
 
 const LS_KEY = 'oit_reporter'
@@ -49,6 +51,12 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
   function setDescription(id: string, description: string) {
     setSelected((prev) =>
       prev.map((s) => (s.id === id ? { ...s, description } : s))
+    )
+  }
+
+  function setPhotoUrl(id: string, photo_url: string) {
+    setSelected((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, photo_url } : s))
     )
   }
 
@@ -88,6 +96,7 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
           reported_by: reportedBy.trim(),
           reporter_phone: phone.trim() || undefined,
           description: s.description.trim(),
+          photo_url: s.photo_url || undefined,
         })
       })
       setSubmitting(false)
@@ -108,6 +117,7 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
               reported_by: reportedBy.trim(),
               reporter_phone: phone.trim() || undefined,
               description: s.description.trim(),
+              photo_url: s.photo_url || undefined,
             }),
           })
         )
@@ -181,13 +191,20 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
             </button>
 
             {isSelected(eq.id) && (
-              <Textarea
-                placeholder={`รายละเอียดปัญหาของ ${eq.name}...`}
-                value={selected.find((s) => s.id === eq.id)?.description ?? ''}
-                onChange={(e) => setDescription(eq.id, e.target.value)}
-                className="text-sm h-20 resize-none ml-4"
-                required
-              />
+              <div className="ml-4 space-y-2">
+                <Textarea
+                  placeholder={`รายละเอียดปัญหาของ ${eq.name}...`}
+                  value={selected.find((s) => s.id === eq.id)?.description ?? ''}
+                  onChange={(e) => setDescription(eq.id, e.target.value)}
+                  className="text-sm h-20 resize-none"
+                  required
+                />
+                <PhotoCapture
+                  equipmentId={eq.id}
+                  uploadUrl="/api/repairs/upload"
+                  onUploaded={(url) => setPhotoUrl(eq.id, url)}
+                />
+              </div>
             )}
           </div>
         ))}

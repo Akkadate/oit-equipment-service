@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('repair_requests')
     .select(`
-      id, reported_by, reporter_phone, description, status, resolved_note, resolved_by, created_at, updated_at,
+      id, reported_by, reporter_phone, description, status, resolved_note, resolved_by, photo_url, created_at, updated_at,
       equipment:equipment ( id, name, asset_code ),
       room:rooms ( id, code, name, building:buildings ( id, code, name ) )
     `)
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { equipment_id, room_id, reported_by, reporter_phone, description } = body
+  const { equipment_id, room_id, reported_by, reporter_phone, description, photo_url } = body
 
   if (!equipment_id || !room_id || !reported_by || !description) {
     return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('repair_requests')
-    .insert({ equipment_id, room_id, reported_by, reporter_phone, description })
+    .insert({ equipment_id, room_id, reported_by, reporter_phone, description, photo_url: photo_url || null })
     .select()
     .single()
 

@@ -5,9 +5,10 @@ import { useRef, useState } from 'react'
 interface Props {
   equipmentId: string
   onUploaded: (url: string) => void
+  uploadUrl?: string
 }
 
-export function PhotoCapture({ equipmentId, onUploaded }: Props) {
+export function PhotoCapture({ equipmentId, onUploaded, uploadUrl = '/api/inspections/upload' }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -22,7 +23,7 @@ export function PhotoCapture({ equipmentId, onUploaded }: Props) {
       form.append('file', file)
       form.append('equipment_id', equipmentId)
 
-      const res = await fetch('/api/inspections/upload', { method: 'POST', body: form })
+      const res = await fetch(uploadUrl, { method: 'POST', body: form })
       if (!res.ok) {
         const err = await res.json()
         setError(err.error ?? 'อัปโหลดไม่สำเร็จ')

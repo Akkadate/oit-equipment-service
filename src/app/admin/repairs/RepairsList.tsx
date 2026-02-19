@@ -103,6 +103,15 @@ export function RepairsList({ repairs }: Props) {
                     {' · '}
                     {new Date(r.created_at).toLocaleString('th-TH')}
                   </p>
+                  {r.photo_url && (
+                    <a href={r.photo_url} target="_blank" rel="noopener noreferrer" className="inline-block mt-2">
+                      <img
+                        src={r.photo_url}
+                        alt="รูปอุปกรณ์"
+                        className="h-24 w-24 object-cover rounded-lg border hover:opacity-90 transition-opacity"
+                      />
+                    </a>
+                  )}
                   {(r.resolved_note || r.resolved_by) && (
                     <div className="bg-green-50 rounded-lg p-2 mt-2 space-y-0.5">
                       {r.resolved_by && (
