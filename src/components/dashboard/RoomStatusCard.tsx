@@ -53,10 +53,17 @@ export function RoomStatusCard({ room }: Props) {
         className={`relative bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden
           transition-all duration-150 hover:shadow-md hover:ring-2 hover:border-transparent
           active:scale-[0.96] ${cfg.ring}`}
-        title={`${room.code} — ${cfg.label}`}
+        title={`${room.code} — ${cfg.label}${room.pending_repairs > 0 ? ` · แจ้งซ่อม ${room.pending_repairs} รายการ` : ''}`}
       >
         {/* Colored left accent bar */}
         <div className={`absolute left-0 inset-y-0 w-[3px] ${cfg.bar}`} />
+
+        {/* Orange repair badge (top-right) */}
+        {room.pending_repairs > 0 && (
+          <span className="absolute top-1 right-1 min-w-[14px] h-[14px] bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none">
+            {room.pending_repairs}
+          </span>
+        )}
 
         <div className="pl-3 pr-2.5 py-2.5">
           {/* Room code + status dot */}

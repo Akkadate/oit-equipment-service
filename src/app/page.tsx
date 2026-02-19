@@ -108,6 +108,7 @@ export default async function DashboardPage() {
         <LegendItem color="bg-amber-500" label="ชำรุด" />
         <LegendItem color="bg-red-500" label="รอเปลี่ยน" />
         <LegendItem color="bg-gray-300" label="ยังไม่ตรวจ" />
+        <LegendItem color="bg-orange-500" label="แจ้งซ่อม" />
       </div>
     </div>
   )
