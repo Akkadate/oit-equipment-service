@@ -157,27 +157,26 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
             <button
               type="button"
               onClick={() => toggleEquipment(eq.id)}
-              className={`w-full text-left border rounded-xl p-4 transition-all ${
+              className={`w-full text-left border rounded-lg px-3 py-2.5 transition-all ${
                 isSelected(eq.id)
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900 text-sm">{eq.name}</p>
-                  <p className="text-xs text-gray-400 font-mono">{eq.asset_code}</p>
-                  <p className="text-xs text-gray-500">{eq.equipment_type?.name}</p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-[10px] ${
+                      isSelected(eq.id)
+                        ? 'bg-blue-600 border-blue-600 text-white'
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {isSelected(eq.id) && '✓'}
+                  </span>
+                  <span className="font-medium text-gray-900 text-sm truncate">{eq.name}</span>
                 </div>
-                <span
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    isSelected(eq.id)
-                      ? 'bg-blue-600 border-blue-600 text-white'
-                      : 'border-gray-300'
-                  }`}
-                >
-                  {isSelected(eq.id) && '✓'}
-                </span>
+                <span className="text-xs text-gray-400 font-mono flex-shrink-0">{eq.asset_code}</span>
               </div>
             </button>
 
