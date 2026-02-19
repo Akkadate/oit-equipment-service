@@ -12,8 +12,15 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "OIT Equipment",
+    startupImage: "/icons/icon-512x512.png",
+  },
+  icons: {
+    apple: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512" },
+    ],
   },
   other: {
     "mobile-web-app-capable": "yes",
