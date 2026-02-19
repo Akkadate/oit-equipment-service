@@ -1,5 +1,11 @@
 import { RoomStatus, EquipmentStatus } from '@/types'
 
+// ใช้สำหรับ server-side fetch เรียก API ตัวเอง ผ่าน localhost แทน public domain
+export function internalUrl(path: string): string {
+  const port = process.env.PORT ?? '3001'
+  return `http://localhost:${port}${path}`
+}
+
 // คำนวณสถานะห้องจากสถานะอุปกรณ์ทั้งหมด
 export function calcRoomStatus(statuses: EquipmentStatus[]): RoomStatus {
   if (statuses.length === 0) return 'unchecked'

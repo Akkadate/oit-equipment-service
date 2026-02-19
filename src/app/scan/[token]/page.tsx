@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { internalUrl } from '@/lib/equipment'
 
 async function getRoomByToken(token: string) {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/scan/${token}`,
+    internalUrl(`/api/scan/${token}`),
     { cache: 'no-store' }
   )
   if (!res.ok) return null

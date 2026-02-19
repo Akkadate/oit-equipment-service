@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { InspectionForm } from '@/components/equipment/InspectionForm'
+import { internalUrl } from '@/lib/equipment'
 
 async function getScanData(token: string) {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/scan/${token}`,
+    internalUrl(`/api/scan/${token}`),
     { cache: 'no-store' }
   )
   if (!res.ok) return null

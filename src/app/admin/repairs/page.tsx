@@ -1,10 +1,10 @@
 import { Navbar } from '@/components/shared/Navbar'
 import { RepairRequest } from '@/types'
-import { repairStatusLabel, repairStatusColor } from '@/lib/equipment'
+import { repairStatusLabel, repairStatusColor, internalUrl } from '@/lib/equipment'
 import { RepairStatusUpdater } from './RepairStatusUpdater'
 
 async function getRepairs(): Promise<RepairRequest[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/repairs`, {
+  const res = await fetch(internalUrl('/api/repairs'), {
     cache: 'no-store',
   })
   if (!res.ok) return []

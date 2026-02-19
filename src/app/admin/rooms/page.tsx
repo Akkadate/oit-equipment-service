@@ -1,12 +1,13 @@
 import { Navbar } from '@/components/shared/Navbar'
 import { QRCodeGenerator } from '@/components/qr/QRCodeGenerator'
+import { internalUrl } from '@/lib/equipment'
 
 async function getRooms() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/equipment`, {
+  const res = await fetch(internalUrl('/api/equipment'), {
     cache: 'no-store',
   })
   // Use dashboard data to get rooms
-  const dashboard = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/dashboard`, {
+  const dashboard = await fetch(internalUrl('/api/dashboard'), {
     cache: 'no-store',
   })
   if (!dashboard.ok) return []

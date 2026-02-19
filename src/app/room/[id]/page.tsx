@@ -1,11 +1,11 @@
 import { Navbar } from '@/components/shared/Navbar'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Equipment, RepairRequest } from '@/types'
-import { repairStatusLabel, repairStatusColor } from '@/lib/equipment'
+import { repairStatusLabel, repairStatusColor, internalUrl } from '@/lib/equipment'
 
 async function getEquipment(roomId: string): Promise<Equipment[]> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/equipment?roomId=${roomId}`,
+    internalUrl(`/api/equipment?roomId=${roomId}`),
     { cache: 'no-store' }
   )
   if (!res.ok) return []
@@ -14,7 +14,7 @@ async function getEquipment(roomId: string): Promise<Equipment[]> {
 
 async function getRepairs(roomId: string): Promise<RepairRequest[]> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/repairs?roomId=${roomId}`,
+    internalUrl(`/api/repairs?roomId=${roomId}`),
     { cache: 'no-store' }
   )
   if (!res.ok) return []
@@ -23,7 +23,7 @@ async function getRepairs(roomId: string): Promise<RepairRequest[]> {
 
 async function getInspections(roomId: string) {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/inspections?roomId=${roomId}`,
+    internalUrl(`/api/inspections?roomId=${roomId}`),
     { cache: 'no-store' }
   )
   if (!res.ok) return []

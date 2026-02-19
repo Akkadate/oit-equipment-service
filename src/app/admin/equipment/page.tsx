@@ -1,9 +1,10 @@
 import { Navbar } from '@/components/shared/Navbar'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { EquipmentManager } from './EquipmentManager'
+import { internalUrl } from '@/lib/equipment'
 
 async function getEquipment() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/equipment`, {
+  const res = await fetch(internalUrl('/api/equipment'), {
     cache: 'no-store',
   })
   if (!res.ok) return []

@@ -2,9 +2,10 @@ import { Navbar } from '@/components/shared/Navbar'
 import { RoomStatusCard } from '@/components/dashboard/RoomStatusCard'
 import { StatusSummaryBar } from '@/components/dashboard/StatusSummaryBar'
 import { CampusSummary } from '@/types'
+import { internalUrl } from '@/lib/equipment'
 
 async function getDashboardData(): Promise<CampusSummary[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/dashboard`, {
+  const res = await fetch(internalUrl('/api/dashboard'), {
     cache: 'no-store',
   })
   if (!res.ok) return []
