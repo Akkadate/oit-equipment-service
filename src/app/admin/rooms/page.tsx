@@ -2,6 +2,8 @@ import { Navbar } from '@/components/shared/Navbar'
 import { RoomManager } from './RoomManager'
 import { createServiceClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 async function getData() {
   const supabase = createServiceClient()
   const [roomsRes, buildingsRes] = await Promise.all([

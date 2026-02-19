@@ -4,18 +4,20 @@ import { createServiceClient } from '@/lib/supabase'
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const roomId = searchParams.get('roomId')
+  const showRetired = searchParams.get('showRetired') === 'true'
   const supabase = createServiceClient()
 
   let query = supabase
     .from('equipment')
     .select(`
-      id, name, asset_code, serial_number, installed_at, note, created_at,
+      id, name, asset_code, serial_number, installed_at, note, retired_at, created_at,
       equipment_type:equipment_types ( id, name ),
       room:rooms ( id, code, name, building:buildings ( id, code, name, campus:campuses ( id, code, name ) ) )
     `)
     .order('name')
 
   if (roomId) query = query.eq('room_id', roomId)
+  if (!showRetired) query = query.is('retired_at', null)
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

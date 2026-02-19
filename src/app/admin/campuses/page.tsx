@@ -2,6 +2,8 @@ import { Navbar } from '@/components/shared/Navbar'
 import { CampusManager } from './CampusManager'
 import { createServiceClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 async function getCampuses() {
   const supabase = createServiceClient()
   const { data } = await supabase.from('campuses').select('*').order('name')
