@@ -58,6 +58,27 @@ function parseCSVLine(line: string): string[] {
 export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
   const [items, setItems] = useState<any[]>(initial)
 
+  // Retired equipment
+  const [showRetired, setShowRetired] = useState(false)
+  const [retiredItems, setRetiredItems] = useState<any[] | null>(null)
+  const [loadingRetired, setLoadingRetired] = useState(false)
+
+  async function toggleRetired() {
+    if (!showRetired && retiredItems === null) {
+      setLoadingRetired(true)
+      try {
+        const res = await fetch('/api/equipment?showRetired=true')
+        if (res.ok) {
+          const all: any[] = await res.json()
+          setRetiredItems(all.filter((e) => e.retired_at))
+        }
+      } finally {
+        setLoadingRetired(false)
+      }
+    }
+    setShowRetired((v) => !v)
+  }
+
   // Add/Edit modal
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<any | null>(null)
@@ -321,6 +342,15 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
           </button>
         )}
         <div className="ml-auto flex gap-2">
+          <button type="button" onClick={toggleRetired}
+            disabled={loadingRetired}
+            className={`text-sm px-3 py-2 rounded-lg border transition-colors disabled:opacity-50 ${
+              showRetired
+                ? 'bg-orange-50 border-orange-300 text-orange-700'
+                : 'border-gray-300 hover:bg-gray-50'
+            }`}>
+            {loadingRetired ? 'กำลังโหลด...' : showRetired ? 'ซ่อนจำหน่ายออก' : 'จำหน่ายออกแล้ว'}
+          </button>
           <button type="button" onClick={downloadTemplate}
             className="text-sm px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
             Template CSV
@@ -512,6 +542,45 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
             className="text-xs px-3 py-1.5 rounded border hover:bg-gray-50 disabled:opacity-40">ถัดไป</button>
           <button type="button" onClick={() => setPage(totalPages)} disabled={safePage === totalPages}
             className="text-xs px-2 py-1.5 rounded border hover:bg-gray-50 disabled:opacity-40">»</button>
+        </div>
+      )}
+
+      {/* Retired equipment section */}
+      {showRetired && retiredItems !== null && (
+        <div className="mt-8">
+          <h3 className="text-base font-semibold text-gray-700 mb-3">
+            อุปกรณ์ที่จำหน่ายออกแล้ว ({retiredItems.length} รายการ)
+          </h3>
+          {retiredItems.length === 0 ? (
+            <p className="text-gray-400 text-sm">ไม่มีอุปกรณ์ที่จำหน่ายออก</p>
+          ) : (
+            <div className="bg-orange-50 rounded-xl border border-orange-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-orange-100 border-b border-orange-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-orange-800">ชื่ออุปกรณ์</th>
+                    <th className="px-4 py-3 text-left font-medium text-orange-800">รหัสทรัพย์สิน</th>
+                    <th className="px-4 py-3 text-left font-medium text-orange-800">ประเภท</th>
+                    <th className="px-4 py-3 text-left font-medium text-orange-800">ห้อง</th>
+                    <th className="px-4 py-3 text-left font-medium text-orange-800">วันที่จำหน่ายออก</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-orange-100">
+                  {retiredItems.map((eq: any) => (
+                    <tr key={eq.id} className="opacity-70">
+                      <td className="px-4 py-3 font-medium text-gray-600 line-through">{eq.name}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-400">{eq.asset_code}</td>
+                      <td className="px-4 py-3 text-gray-400">{eq.equipment_type?.name}</td>
+                      <td className="px-4 py-3 text-gray-400">{eq.room?.building?.name} · {eq.room?.code}</td>
+                      <td className="px-4 py-3 text-orange-600 text-xs">
+                        {eq.retired_at ? new Date(eq.retired_at).toLocaleDateString('th-TH') : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>
