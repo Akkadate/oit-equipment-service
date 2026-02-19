@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
 
 const navLinks = [
   { href: '/', label: 'Dashboard' },
@@ -14,6 +16,22 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [email, setEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? null)
+    })
+  }, [])
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
@@ -37,7 +55,28 @@ export function Navbar() {
           ))}
         </div>
       </div>
-      <span className="text-xs text-gray-400">สำนักเทคโนโลยีสารสนเทศ NBK</span>
+
+      <div className="flex items-center gap-3">
+        {email && (
+          <span className="text-xs text-gray-400 hidden sm:block">{email}</span>
+        )}
+        {email ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="text-xs text-gray-500 hover:text-red-600 px-2 py-1 rounded border hover:border-red-200 hover:bg-red-50 transition-colors"
+          >
+            ออกจากระบบ
+          </button>
+        ) : (
+          <Link
+            href="/login"
+            className="text-xs text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50"
+          >
+            เข้าสู่ระบบ
+          </Link>
+        )}
+      </div>
     </nav>
   )
 }
