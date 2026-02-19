@@ -18,7 +18,9 @@ fi
 
 if [ "$CURRENT_NODE_MAJOR" -lt "$REQUIRED_NODE_MAJOR" ]; then
     echo "[1/6] Node.js $(node -v 2>/dev/null || echo 'ไม่มี') — อัปเกรดเป็น Node.js 22 LTS..."
-    apt-get remove -y nodejs npm 2>/dev/null || true
+    # ลบ package ทั้งหมดที่ขัดแย้ง (รวม libnode-dev ที่ Ubuntu 20.04 ติดตั้งมา)
+    apt-get remove -y nodejs npm libnode-dev libnode72 2>/dev/null || true
+    apt-get autoremove -y 2>/dev/null || true
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get install -y nodejs
     echo "    Node.js $(node -v) ติดตั้งเรียบร้อย"
