@@ -4,38 +4,55 @@
 
 set -e
 
-APP_DIR="/var/www/oit-equipment-service"
+APP_DIR="/var/www/app/oit-equipment-service"
 DOMAIN="oitservice.norhbkk.ac.th"
+REQUIRED_NODE_MAJOR=18
 
 echo "=== OIT Equipment Service — Server Setup ==="
 
-# ─── 1. ติดตั้ง Node.js (LTS) ────────────────────────────────────────────
-if ! command -v node &>/dev/null; then
-    echo "[1/6] ติดตั้ง Node.js..."
+# ─── 1. ตรวจสอบ/อัปเกรด Node.js ─────────────────────────────────────────
+CURRENT_NODE_MAJOR=0
+if command -v node &>/dev/null; then
+    CURRENT_NODE_MAJOR=$(node -e "process.stdout.write(String(process.versions.node.split('.')[0]))")
+fi
+
+if [ "$CURRENT_NODE_MAJOR" -lt "$REQUIRED_NODE_MAJOR" ]; then
+    echo "[1/6] Node.js $(node -v 2>/dev/null || echo 'ไม่มี') — อัปเกรดเป็น Node.js 22 LTS..."
+    apt-get remove -y nodejs npm 2>/dev/null || true
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get install -y nodejs
+    echo "    Node.js $(node -v) ติดตั้งเรียบร้อย"
 else
-    echo "[1/6] Node.js $(node -v) มีอยู่แล้ว"
+    echo "[1/6] Node.js $(node -v) OK (>= v${REQUIRED_NODE_MAJOR})"
 fi
 
 # ─── 2. สร้าง directory ──────────────────────────────────────────────────
 echo "[2/6] สร้าง directory..."
 mkdir -p "$APP_DIR/public/uploads/inspections"
-chown -R www-data:www-data "$APP_DIR"
+chown -R www-data:www-data "$APP_DIR" 2>/dev/null || true
 
-# ─── 3. Copy ไฟล์โปรเจกต์ ────────────────────────────────────────────────
-echo "[3/6] Copy ไฟล์..."
-# สมมติว่า git clone หรือ rsync มาแล้วที่ $APP_DIR
+# ─── 3. Install dependencies + Build ─────────────────────────────────────
+echo "[3/6] Install & Build..."
 cd "$APP_DIR"
-npm ci --omit=dev
+
+# ใช้ npm install แทน npm ci ถ้า lockfile ขาด
+if [ -f "package-lock.json" ]; then
+    npm ci --omit=dev
+else
+    echo "    ไม่พบ package-lock.json — รัน npm install..."
+    npm install --omit=dev
+fi
+
 npm run build
 
 # ─── 4. ตั้งค่า systemd service ──────────────────────────────────────────
 echo "[4/6] ตั้งค่า systemd..."
-cp "$APP_DIR/deploy/oit-equipment.service" /etc/systemd/system/
+sed "s|/var/www/oit-equipment-service|$APP_DIR|g" \
+    "$APP_DIR/deploy/oit-equipment.service" > /etc/systemd/system/oit-equipment.service
 systemctl daemon-reload
 systemctl enable oit-equipment
 systemctl restart oit-equipment
+sleep 2
 echo "    สถานะ: $(systemctl is-active oit-equipment)"
 
 # ─── 5. ตั้งค่า Nginx ────────────────────────────────────────────────────
@@ -43,7 +60,8 @@ echo "[5/6] ตั้งค่า Nginx..."
 if ! command -v nginx &>/dev/null; then
     apt-get install -y nginx
 fi
-cp "$APP_DIR/deploy/nginx.conf" /etc/nginx/sites-available/oitservice
+sed "s|/var/www/oit-equipment-service|$APP_DIR|g" \
+    "$APP_DIR/deploy/nginx.conf" > /etc/nginx/sites-available/oitservice
 ln -sf /etc/nginx/sites-available/oitservice /etc/nginx/sites-enabled/oitservice
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
