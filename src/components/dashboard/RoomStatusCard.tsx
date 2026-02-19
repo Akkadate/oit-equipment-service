@@ -2,52 +2,75 @@
 
 import Link from 'next/link'
 import { RoomSummary } from '@/types'
-import { statusDot, statusLabel, statusColor } from '@/lib/equipment'
 
 interface Props {
   room: RoomSummary
 }
 
+const statusConfig = {
+  normal: {
+    bar: 'bg-emerald-500',
+    dot: 'bg-emerald-500',
+    ring: 'hover:ring-emerald-200',
+    label: 'ปกติ',
+  },
+  damaged: {
+    bar: 'bg-amber-500',
+    dot: 'bg-amber-500',
+    ring: 'hover:ring-amber-200',
+    label: 'ชำรุด',
+  },
+  pending_replacement: {
+    bar: 'bg-red-500',
+    dot: 'bg-red-500',
+    ring: 'hover:ring-red-200',
+    label: 'รอเปลี่ยน',
+  },
+  unchecked: {
+    bar: 'bg-gray-300',
+    dot: 'bg-gray-300',
+    ring: 'hover:ring-gray-200',
+    label: 'ยังไม่ตรวจ',
+  },
+}
+
+function shortDate(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000)
+  if (diffDays === 0) return 'วันนี้'
+  if (diffDays === 1) return 'เมื่อวาน'
+  if (diffDays < 7) return `${diffDays} วันก่อน`
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
+}
+
 export function RoomStatusCard({ room }: Props) {
-  const dot = statusDot[room.status]
-  const dotColor = statusColor[room.status]
+  const cfg = statusConfig[room.status]
 
   return (
-    <Link href={`/room/${room.id}`} className="block">
-      <div className="border rounded-lg p-3 hover:shadow-md transition-shadow bg-white cursor-pointer">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ${dotColor}`}
-              title={statusLabel[room.status]}
-            />
-            <div>
-              <p className="font-medium text-sm text-gray-900">{room.code}</p>
-              {room.name && (
-                <p className="text-xs text-gray-500 line-clamp-1">{room.name}</p>
-              )}
-            </div>
-          </div>
-          <span className="text-lg">{dot}</span>
-        </div>
-        <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
-          <span>{room.equipment_count} รายการ</span>
-          {room.pending_repairs > 0 && (
-            <span className="text-orange-600 font-medium">
-              รอซ่อม {room.pending_repairs}
+    <Link href={`/room/${room.id}`} className="block group">
+      <div
+        className={`relative bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden
+          transition-all duration-150 hover:shadow-md hover:ring-2 hover:border-transparent
+          active:scale-[0.96] ${cfg.ring}`}
+        title={`${room.code} — ${cfg.label}`}
+      >
+        {/* Colored left accent bar */}
+        <div className={`absolute left-0 inset-y-0 w-[3px] ${cfg.bar}`} />
+
+        <div className="pl-3 pr-2.5 py-2.5">
+          {/* Room code + status dot */}
+          <div className="flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+            <span className="font-semibold text-[13px] text-gray-900 leading-tight tracking-tight">
+              {room.code}
             </span>
-          )}
-        </div>
-        {room.last_inspected_at && (
-          <p className="mt-1 text-xs text-gray-400">
-            ตรวจล่าสุด:{' '}
-            {new Date(room.last_inspected_at).toLocaleDateString('th-TH', {
-              day: 'numeric',
-              month: 'short',
-              year: '2-digit',
-            })}
+          </div>
+          {/* Last inspection date */}
+          <p className="text-[10px] text-gray-400 mt-1 leading-none pl-3">
+            {room.last_inspected_at ? shortDate(room.last_inspected_at) : 'ยังไม่ตรวจ'}
           </p>
-        )}
+        </div>
       </div>
     </Link>
   )

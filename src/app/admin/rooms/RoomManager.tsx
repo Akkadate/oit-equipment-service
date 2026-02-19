@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { QRCodeGenerator } from '@/components/qr/QRCodeGenerator'
+import { createCompositeQR } from '@/lib/qr-canvas'
 
 interface Campus { id: string; code: string; name: string }
 interface Building { id: string; code: string; name: string; campus: Campus }
@@ -29,6 +30,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
   const [name, setName] = useState('')
   const [floor, setFloor] = useState('')
   const [loading, setLoading] = useState(false)
+  const [batchLoading, setBatchLoading] = useState(false)
 
   function openAdd() {
     setEditing(null)
@@ -87,10 +89,73 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
     toast.success('ลบห้องแล้ว')
   }
 
+  async function handleBatchPrint() {
+    if (rooms.length === 0) return
+    setBatchLoading(true)
+    try {
+      // Fetch all QR data URLs in parallel
+      const results = await Promise.all(
+        rooms.map(async (r) => {
+          const res = await fetch(`/api/rooms/${r.id}/qr`)
+          const data = await res.json()
+          return { room: r, dataUrl: data.dataUrl as string }
+        })
+      )
+
+      // Create composite images (QR + room text) in parallel
+      const composites = await Promise.all(
+        results.map(({ room, dataUrl }) =>
+          createCompositeQR(dataUrl, room.code, room.building?.name ?? '', room.building?.campus?.name ?? '')
+        )
+      )
+
+      // Build print HTML — 3 columns on A4
+      const items = composites
+        .map((src) => `<div class="qr-item"><img src="${src}" alt="QR" /></div>`)
+        .join('')
+
+      const win = window.open('', '_blank')
+      if (!win) {
+        toast.error('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ (กรุณาอนุญาต popup)')
+        return
+      }
+
+      win.document.write(`<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8" />
+  <title>QR Codes ทั้งหมด</title>
+  <style>
+    @page { size: A4; margin: 10mm; }
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; }
+    .qr-item { break-inside: avoid; text-align: center; }
+    .qr-item img { width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="grid">${items}</div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body></html>`)
+    } catch {
+      toast.error('เกิดข้อผิดพลาดระหว่างโหลด QR Code')
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
   return (
     <div>
-      <div className="flex justify-end mb-4">
+      <div className="flex items-center justify-between mb-4">
         <button
+          type="button"
+          onClick={handleBatchPrint}
+          disabled={batchLoading || rooms.length === 0}
+          className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
+        >
+          {batchLoading ? 'กำลังโหลด QR...' : `พิมพ์ QR ทั้งหมด (${rooms.length})`}
+        </button>
+        <button
+          type="button"
           onClick={openAdd}
           className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg"
         >
@@ -107,6 +172,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
             <div>
               <label className="block text-xs text-gray-500 mb-1">อาคาร</label>
               <select
+                title="เลือกอาคาร"
                 className="border rounded px-3 py-1.5 text-sm w-52"
                 value={buildingId}
                 onChange={(e) => setBuildingId(e.target.value)}
@@ -210,12 +276,14 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         onClick={() => openEdit(r)}
                         className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-200 rounded hover:bg-blue-50"
                       >
                         แก้ไข
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDelete(r)}
                         className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50"
                       >

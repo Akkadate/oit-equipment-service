@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Prompt } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-const geist = Geist({ subsets: ["latin"] });
+const prompt = Prompt({
+  subsets: ["thai", "latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-prompt",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "ระบบแสดงสถานะอุปกรณ์ห้องเรียน | OIT NBK",
@@ -33,8 +38,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th">
-      <body className={`${geist.className} antialiased`}>
+    <html lang="th" className={prompt.variable}>
+      <body className="font-prompt antialiased">
         {children}
         <Toaster richColors position="top-right" />
       </body>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { createCompositeQR } from '@/lib/qr-canvas'
 
 interface Props {
   roomId: string
@@ -11,62 +12,61 @@ interface Props {
 }
 
 export function QRCodeGenerator({ roomId, roomCode, buildingName, campusName }: Props) {
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+  const [compositeUrl, setCompositeUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function loadQR() {
     setLoading(true)
-    const res = await fetch(`/api/rooms/${roomId}/qr`)
-    const data = await res.json()
-    setQrDataUrl(data.dataUrl)
-    setLoading(false)
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/qr`)
+      const data = await res.json()
+      const composite = await createCompositeQR(data.dataUrl, roomCode, buildingName, campusName)
+      setCompositeUrl(composite)
+    } finally {
+      setLoading(false)
+    }
   }
 
   function downloadQR() {
-    if (!qrDataUrl) return
+    if (!compositeUrl) return
     const a = document.createElement('a')
-    a.href = qrDataUrl
+    a.href = compositeUrl
     a.download = `QR-${roomCode}.png`
     a.click()
   }
 
   function printQR() {
-    if (!qrDataUrl) return
+    if (!compositeUrl) return
     const win = window.open('', '_blank')
     if (!win) return
     win.document.write(`
-      <html><head><title>QR Code - ${roomCode}</title>
+      <html><head><title>QR Code - ห้อง ${roomCode}</title>
       <style>
-        body { font-family: sans-serif; text-align: center; padding: 40px; }
-        img { width: 300px; height: 300px; }
-        h2 { margin: 16px 0 4px; font-size: 20px; }
-        p { color: #666; font-size: 14px; margin: 4px 0; }
+        body { font-family: sans-serif; text-align: center; padding: 40px; margin: 0; }
+        img { width: 280px; height: auto; }
       </style></head>
       <body>
-        <img src="${qrDataUrl}" alt="QR Code" />
-        <h2>ห้อง ${roomCode}</h2>
-        <p>${buildingName}</p>
-        <p>${campusName}</p>
-        <script>window.onload = () => { window.print(); window.close(); }</script>
+        <img src="${compositeUrl}" alt="QR Code ห้อง ${roomCode}" />
+        <script>window.onload = () => { window.print(); window.close(); }<\/script>
       </body></html>
     `)
   }
 
   return (
     <div className="space-y-3">
-      {!qrDataUrl ? (
+      {!compositeUrl ? (
         <Button onClick={loadQR} disabled={loading} variant="outline" size="sm">
           {loading ? 'กำลังโหลด...' : 'แสดง QR Code'}
         </Button>
       ) : (
-        <div className="space-y-3">
-          <img src={qrDataUrl} alt="QR Code" className="w-40 h-40 border rounded" />
-          <div className="flex gap-2">
+        <div className="space-y-2">
+          <img src={compositeUrl} alt={`QR Code ห้อง ${roomCode}`} className="w-36 h-auto border rounded" />
+          <div className="flex gap-2 flex-wrap">
             <Button onClick={downloadQR} variant="outline" size="sm">
-              ดาวน์โหลด PNG
+              ดาวน์โหลด
             </Button>
             <Button onClick={printQR} variant="outline" size="sm">
-              พิมพ์ QR
+              พิมพ์
             </Button>
           </div>
         </div>
