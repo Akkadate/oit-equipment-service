@@ -1,6 +1,5 @@
 import { Navbar } from '@/components/shared/Navbar'
 import { DashboardContent } from '@/components/dashboard/DashboardContent'
-import { RealtimeDashboardRefresher } from '@/components/dashboard/RealtimeDashboardRefresher'
 import { CampusSummary } from '@/types'
 import { internalUrl } from '@/lib/equipment'
 
@@ -18,7 +17,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <RealtimeDashboardRefresher />
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-3 sm:px-5 pb-20 pt-5">
@@ -51,7 +49,7 @@ export default async function DashboardPage() {
             </p>
           </div>
         ) : (
-          <DashboardContent campuses={campuses} />
+          <DashboardContent initialCampuses={campuses} />
         )}
       </main>
 

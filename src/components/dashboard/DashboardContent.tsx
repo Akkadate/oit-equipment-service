@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { CampusSummary, RoomSummary } from '@/types'
+import { createClient } from '@/lib/supabase'
 import { RoomStatusCard } from './RoomStatusCard'
 import { StatusSummaryBar } from './StatusSummaryBar'
 
 const LS_VIEW_KEY = 'oit_dashboard_view'
+const POLL_INTERVAL = 30_000 // 30s fallback polling
 
 const DOT_COLOR: Record<string, string> = {
   normal: 'bg-emerald-500',
@@ -16,18 +18,53 @@ const DOT_COLOR: Record<string, string> = {
 }
 
 interface Props {
-  campuses: CampusSummary[]
+  initialCampuses: CampusSummary[]
 }
 
-export function DashboardContent({ campuses }: Props) {
+export function DashboardContent({ initialCampuses }: Props) {
+  const [campuses, setCampuses] = useState<CampusSummary[]>(initialCampuses)
   const [view, setView] = useState<'grid' | 'dot'>('grid')
+  const [live, setLive] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch('/api/dashboard', { cache: 'no-store' })
+      if (res.ok) setCampuses(await res.json())
+    } catch { /* ignore */ }
+  }, [])
+
+  function scheduleRefresh() {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(refresh, 800)
+  }
 
   useEffect(() => {
+    // Restore view preference
     try {
       const saved = localStorage.getItem(LS_VIEW_KEY)
       if (saved === 'dot' || saved === 'grid') setView(saved as 'grid' | 'dot')
     } catch { /* ignore */ }
-  }, [])
+
+    // Polling fallback (every 30s)
+    const pollTimer = setInterval(refresh, POLL_INTERVAL)
+
+    // Supabase Realtime — instant update (requires tables added to publication)
+    const supabase = createClient()
+    const channel = supabase
+      .channel('dashboard-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'repair_requests' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment_inspections' }, scheduleRefresh)
+      .subscribe((status) => {
+        setLive(status === 'SUBSCRIBED')
+      })
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      clearInterval(pollTimer)
+      supabase.removeChannel(channel)
+    }
+  }, [refresh]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function setViewPersist(v: 'grid' | 'dot') {
     setView(v)
@@ -36,8 +73,16 @@ export function DashboardContent({ campuses }: Props) {
 
   return (
     <>
-      {/* View toggle */}
-      <div className="flex justify-end mb-4">
+      {/* View toggle + live indicator */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`w-2 h-2 rounded-full ${live ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`}
+            title={live ? 'รับข้อมูลแบบ real-time' : 'polling ทุก 30 วินาที'}
+          />
+          <span className="text-[10px] text-gray-400">{live ? 'live' : 'auto'}</span>
+        </div>
+
         <div className="flex gap-0.5 bg-gray-100 border border-gray-200 rounded-lg p-0.5">
           <button
             type="button"
@@ -67,7 +112,7 @@ export function DashboardContent({ campuses }: Props) {
       </div>
 
       {view === 'grid' ? (
-        /* ── Grid view (existing) ───────────────────────────── */
+        /* ── Grid view ──────────────────────────────────────── */
         <div className="space-y-8">
           {campuses.map((campus) => (
             <section key={campus.id}>
@@ -109,18 +154,15 @@ export function DashboardContent({ campuses }: Props) {
         <div className="space-y-5">
           {campuses.map((campus) => (
             <section key={campus.id}>
-              {/* Campus header */}
               <div className="flex items-center gap-2 mb-2.5">
                 <div className="w-1 h-4 bg-blue-600 rounded-full flex-shrink-0" />
                 <h2 className="font-semibold text-gray-700 text-sm">{campus.name}</h2>
               </div>
 
-              {/* Building cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {campus.buildings.map((building) => {
                   const buildingRepairs = building.rooms.reduce(
-                    (sum, r) => sum + (r.pending_repairs ?? 0),
-                    0
+                    (sum, r) => sum + (r.pending_repairs ?? 0), 0
                   )
                   const hasRepairs = buildingRepairs > 0
 
@@ -128,18 +170,11 @@ export function DashboardContent({ campuses }: Props) {
                     <div
                       key={building.id}
                       className={`rounded-xl border px-3 py-2.5 transition-colors ${
-                        hasRepairs
-                          ? 'bg-orange-50 border-orange-200'
-                          : 'bg-white border-gray-200'
+                        hasRepairs ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'
                       }`}
                     >
-                      {/* Building label row */}
                       <div className="flex items-center justify-between mb-2">
-                        <span
-                          className={`text-xs font-semibold truncate ${
-                            hasRepairs ? 'text-orange-700' : 'text-gray-600'
-                          }`}
-                        >
+                        <span className={`text-xs font-semibold truncate ${hasRepairs ? 'text-orange-700' : 'text-gray-600'}`}>
                           {building.name}
                         </span>
                         <div className="flex items-center gap-1.5 ml-2 shrink-0">
@@ -152,7 +187,6 @@ export function DashboardContent({ campuses }: Props) {
                         </div>
                       </div>
 
-                      {/* Room dots */}
                       <div className="flex flex-wrap gap-1">
                         {building.rooms.map((room) => (
                           <RoomDot key={room.id} room={room} />
