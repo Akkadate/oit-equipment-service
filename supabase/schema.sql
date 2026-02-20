@@ -165,6 +165,28 @@ CREATE POLICY "repairs_update_staff"  ON repair_requests FOR UPDATE
   USING (auth.jwt() ->> 'role' IN ('admin', 'staff'));
 
 
+-- Web Push subscriptions (admin/staff per device)
+CREATE TABLE push_subscriptions (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID        NOT NULL,               -- Supabase Auth user id
+  endpoint   TEXT        UNIQUE NOT NULL,        -- Push service URL (browser-specific)
+  p256dh     TEXT        NOT NULL,              -- ECDH public key
+  auth_key   TEXT        NOT NULL,              -- Auth secret
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS push_subscriptions_user_id_idx ON push_subscriptions (user_id);
+
+ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "push_sub_select" ON push_subscriptions FOR SELECT
+  USING (auth.jwt() ->> 'role' IN ('admin', 'staff'));
+CREATE POLICY "push_sub_insert" ON push_subscriptions FOR INSERT
+  WITH CHECK (auth.jwt() ->> 'role' IN ('admin', 'staff'));
+CREATE POLICY "push_sub_delete" ON push_subscriptions FOR DELETE
+  USING (auth.jwt() ->> 'role' IN ('admin', 'staff'));
+
+
 -- ============================================================
 -- SUPABASE REALTIME
 -- ============================================================

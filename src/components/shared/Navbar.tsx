@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { useEffect, useRef, useState } from 'react'
+import { PushToggle } from './PushToggle'
 
 const navLinks = [
   { href: '/', label: 'Dashboard' },
@@ -110,10 +111,12 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Right: profile + logout */}
+        {/* Right: push toggle + profile + logout */}
         <div className="flex items-center gap-2">
           {authUser ? (
             <>
+              <PushToggle />
+
               {/* Profile dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button

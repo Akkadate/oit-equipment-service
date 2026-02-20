@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { sendTelegramNotify, buildRepairNotifyMessage } from '@/lib/notify'
+import { sendPushToAll } from '@/lib/webpush'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -64,7 +65,14 @@ export async function POST(req: NextRequest) {
       reporterPhone: reporter_phone,
       description,
     })
-    sendTelegramNotify(msg).catch(() => {}) // fire-and-forget ไม่ block response
+    sendTelegramNotify(msg).catch(() => {}) // fire-and-forget
+
+    // Web Push — แจ้งเตือน admin/staff ทุกคนที่ subscribe ไว้
+    sendPushToAll({
+      title: `🔧 แจ้งซ่อม · ห้อง ${room?.code ?? ''}`,
+      body: `${eqData.name} — ${description}`,
+      url: '/admin/repairs',
+    }).catch(() => {})
   }
 
   return NextResponse.json(data, { status: 201 })
