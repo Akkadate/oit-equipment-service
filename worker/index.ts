@@ -1,7 +1,5 @@
 /// <reference lib="webworker" />
 
-declare const self: ServiceWorkerGlobalScope
-
 // ── Push event ────────────────────────────────────────────────
 // รับ push notification จาก server (web-push VAPID)
 self.addEventListener('push', (event) => {
