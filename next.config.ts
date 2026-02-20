@@ -7,8 +7,7 @@ const withPWA = withPWAInit({
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
-  // push event handler — compiled และ import ใน service worker อัตโนมัติ
-  customWorkerEntry: "worker/index.ts",
+  // worker/index.ts ถูก detect อัตโนมัติเมื่อมีอยู่ใน project root
   workboxOptions: {
     disableDevLogs: true,
   },
