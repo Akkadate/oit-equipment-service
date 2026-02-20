@@ -21,7 +21,7 @@ sw.addEventListener('push', (event: PushEvent) => {
       data: { url: data.url ?? '/admin/repairs' },
       tag: 'repair-notify',
       renotify: true,
-    })
+    } as NotificationOptions & { renotify: boolean })
   )
 })
 
