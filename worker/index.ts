@@ -19,9 +19,8 @@ sw.addEventListener('push', (event: PushEvent) => {
       icon: '/icons/icon-192x192.png',
       badge: '/icons/icon-192x192.png',
       data: { url: data.url ?? '/admin/repairs' },
-      tag: 'repair-notify',
-      renotify: true,
-    } as NotificationOptions & { renotify: boolean })
+      tag: `repair-${Date.now()}`,
+    })
   )
 })
 
