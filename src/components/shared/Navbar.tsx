@@ -14,6 +14,7 @@ const navLinks = [
   { href: '/admin/equipment', label: 'อุปกรณ์' },
   { href: '/admin/equipment-types', label: 'ประเภทอุปกรณ์' },
   { href: '/admin/repairs', label: 'แจ้งซ่อม' },
+  { href: '/admin/reports', label: 'รายงาน' },
 ]
 
 export function Navbar() {
@@ -90,7 +91,7 @@ export function Navbar() {
           </button>
 
           <Link href="/" className="font-semibold text-blue-700 text-sm">
-            OIT Equipment
+            AssetLink
           </Link>
 
           {/* Desktop nav links */}

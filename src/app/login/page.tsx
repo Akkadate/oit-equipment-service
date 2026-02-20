@@ -93,8 +93,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4">
             <span className="text-white font-bold text-lg">OIT</span>
           </div>
-          <h1 className="text-xl font-bold text-gray-900">ระบบอุปกรณ์ห้องเรียน</h1>
-          <p className="text-sm text-gray-500 mt-1">สำนักเทคโนโลยีสารสนเทศ NBK</p>
+          <h1 className="text-xl font-bold text-gray-900">AssetLink</h1>
+          <p className="text-sm text-gray-500 mt-1">สำนักเทคโนโลยีสารสนเทศ · NBU</p>
         </div>
         <Suspense fallback={<div className="bg-white rounded-2xl border p-6 text-center text-gray-400 text-sm">กำลังโหลด...</div>}>
           <LoginForm />

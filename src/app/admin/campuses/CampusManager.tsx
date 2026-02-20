@@ -108,7 +108,7 @@ export function CampusManager({ campuses: initial }: Props) {
               <label className="block text-xs text-gray-500 mb-1">รหัส (code)</label>
               <input
                 className="border rounded px-3 py-1.5 text-sm w-36"
-                placeholder="เช่น NBK-NORTH"
+                placeholder="เช่น NBU-NORTH"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 required

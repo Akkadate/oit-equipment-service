@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Prompt } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { Footer } from "@/components/shared/Footer";
 
 const prompt = Prompt({
   subsets: ["thai", "latin"],
@@ -11,14 +12,14 @@ const prompt = Prompt({
 });
 
 export const metadata: Metadata = {
-  title: "ระบบแสดงสถานะอุปกรณ์ห้องเรียน | OIT NBK",
+  title: "AssetLink | OIT NBU",
   description:
-    "ระบบบริหารจัดการและตรวจสอบอุปกรณ์ในห้องเรียน สำนักเทคโนโลยีสารสนเทศ มหาวิทยาลัยนอร์ทกรุงเทพ",
+    "AssetLink — ระบบบริหารจัดการและติดตามอุปกรณ์ สำนักเทคโนโลยีสารสนเทศ มหาวิทยาลัยนอร์ทกรุงเทพ",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "OIT Equipment",
+    title: "AssetLink",
     startupImage: "/icons/icon-512x512.png",
   },
   icons: {
@@ -41,6 +42,7 @@ export default function RootLayout({
     <html lang="th" className={prompt.variable}>
       <body className="font-prompt antialiased">
         {children}
+        <Footer />
         <Toaster richColors position="top-right" />
       </body>
     </html>

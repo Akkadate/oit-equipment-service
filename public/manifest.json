@@ -1,7 +1,7 @@
 {
-  "name": "OIT Equipment — ระบบอุปกรณ์ห้องเรียน",
-  "short_name": "OIT Equipment",
-  "description": "ระบบตรวจสอบและแจ้งซ่อมอุปกรณ์ห้องเรียน มหาวิทยาลัยนอร์ทกรุงเทพ",
+  "name": "AssetLink — ระบบบริหารจัดการอุปกรณ์",
+  "short_name": "AssetLink",
+  "description": "AssetLink ระบบติดตามและแจ้งซ่อมอุปกรณ์ สำนักเทคโนโลยีสารสนเทศ มหาวิทยาลัยนอร์ทกรุงเทพ",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f9fafb",
