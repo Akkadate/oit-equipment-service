@@ -12,14 +12,14 @@ const prompt = Prompt({
 });
 
 export const metadata: Metadata = {
-  title: "AssetLink | OIT NBU",
+  title: "OIT AssetLink | NBU",
   description:
-    "AssetLink — ระบบบริหารจัดการและติดตามอุปกรณ์ สำนักเทคโนโลยีสารสนเทศ มหาวิทยาลัยนอร์ทกรุงเทพ",
+    "OIT AssetLink — ระบบบริหารจัดการและติดตามอุปกรณ์ สำนักเทคโนโลยีสารสนเทศ มหาวิทยาลัยนอร์ทกรุงเทพ",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "AssetLink",
+    title: "OIT AssetLink",
     startupImage: "/icons/icon-512x512.png",
   },
   icons: {

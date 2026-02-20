@@ -1,7 +1,7 @@
 {
-  "name": "AssetLink — ระบบบริหารจัดการอุปกรณ์",
-  "short_name": "AssetLink",
-  "description": "AssetLink ระบบติดตามและแจ้งซ่อมอุปกรณ์ สำนักเทคโนโลยีสารสนเทศ มหาวิทยาลัยนอร์ทกรุงเทพ",
+  "name": "OIT AssetLink — ระบบบริหารจัดการอุปกรณ์",
+  "short_name": "OIT AssetLink",
+  "description": "OIT AssetLink ระบบติดตามและแจ้งซ่อมอุปกรณ์ สำนักเทคโนโลยีสารสนเทศ มหาวิทยาลัยนอร์ทกรุงเทพ",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f9fafb",

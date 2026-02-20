@@ -91,7 +91,7 @@ export function Navbar() {
           </button>
 
           <Link href="/" className="font-semibold text-blue-700 text-sm">
-            AssetLink
+            OIT AssetLink
           </Link>
 
           {/* Desktop nav links */}
