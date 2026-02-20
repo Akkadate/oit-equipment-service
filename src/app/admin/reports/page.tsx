@@ -269,7 +269,6 @@ export default async function ReportsPage() {
           </div>
           {/* Legend row */}
           <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-gray-500 border-t border-gray-50 pt-3">
-            {chartData.reduce((a, r) => ({ total: a.total + r.total, pending: a.pending + r.pending, in_progress: a.in_progress + r.in_progress, resolved: a.resolved + r.resolved, closed: a.closed + r.closed }), { total: 0, pending: 0, in_progress: 0, resolved: 0, closed: 0 })}
             {(() => {
               const tot = chartData.reduce((a, r) => ({ total: a.total + r.total, pending: a.pending + r.pending, in_progress: a.in_progress + r.in_progress, resolved: a.resolved + r.resolved, closed: a.closed + r.closed }), { total: 0, pending: 0, in_progress: 0, resolved: 0, closed: 0 })
               return <>
