@@ -31,8 +31,10 @@ export async function sendPushToAll(payload: PushPayload): Promise<void> {
 
   const payloadStr = JSON.stringify(payload)
 
+  type Sub = { endpoint: string; p256dh: string; auth_key: string }
+
   const results = await Promise.allSettled(
-    subs.map((sub) =>
+    (subs as Sub[]).map((sub) =>
       webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
         payloadStr,
@@ -41,10 +43,10 @@ export async function sendPushToAll(payload: PushPayload): Promise<void> {
   )
 
   // ลบ subscription ที่ browser ยกเลิกไปแล้ว (410 Gone)
-  const expiredEndpoints = subs
+  const expiredEndpoints = (subs as Sub[])
     .filter((_, i) => {
       const r = results[i]
-      return r.status === 'rejected' && (r.reason as any)?.statusCode === 410
+      return r.status === 'rejected' && (r.reason as { statusCode?: number })?.statusCode === 410
     })
     .map((s) => s.endpoint)
 
