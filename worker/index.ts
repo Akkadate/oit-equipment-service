@@ -2,7 +2,7 @@
 
 // ── Push event ────────────────────────────────────────────────
 // รับ push notification จาก server (web-push VAPID)
-self.addEventListener('push', (event) => {
+self.addEventListener('push', (event: PushEvent) => {
   if (!event.data) return
 
   const data = event.data.json() as {
@@ -25,7 +25,7 @@ self.addEventListener('push', (event) => {
 
 // ── Notification click ─────────────────────────────────────────
 // คลิก notification → เปิด tab หรือ focus tab ที่เปิดอยู่แล้ว
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close()
   const url: string = (event.notification.data as { url: string })?.url ?? '/admin/repairs'
 
