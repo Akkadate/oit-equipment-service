@@ -167,7 +167,7 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="text-xs text-gray-500 hover:text-red-600 px-2 py-1 rounded border hover:border-red-200 hover:bg-red-50 transition-colors"
+                className="hidden sm:inline-flex text-xs text-gray-500 hover:text-red-600 px-2 py-1 rounded border hover:border-red-200 hover:bg-red-50 transition-colors"
               >
                 ออกจากระบบ
               </button>
@@ -202,8 +202,18 @@ export function Navbar() {
             ))}
           </div>
           {authUser && (
-            <div className="border-t border-gray-100 px-4 py-3">
-              <p className="text-xs text-gray-400">{displayName ?? authUser.email}</p>
+            <div className="border-t border-gray-100 px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">{displayName ?? authUser.email}</p>
+                <PushToggle />
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full text-left text-sm text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
+              >
+                ออกจากระบบ
+              </button>
             </div>
           )}
         </div>
