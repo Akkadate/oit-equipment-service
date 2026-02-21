@@ -17,6 +17,21 @@ const DOT_COLOR: Record<string, string> = {
   unchecked: 'bg-gray-300',
 }
 
+// จัดกลุ่มห้องตามชั้น → [[ชั้น, ห้อง[]], ...]  เรียงชั้นน้อย→มาก, null ไว้ท้าย
+function groupByFloor(rooms: RoomSummary[]): [number | null, RoomSummary[]][] {
+  const map = new Map<number | null, RoomSummary[]>()
+  for (const room of rooms) {
+    const key = room.floor ?? null
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(room)
+  }
+  return [...map.entries()].sort(([a], [b]) => {
+    if (a === null) return 1
+    if (b === null) return -1
+    return a - b
+  })
+}
+
 interface Props {
   initialCampuses: CampusSummary[]
 }
@@ -138,11 +153,37 @@ export function DashboardContent({ initialCampuses }: Props) {
                         {building.total_rooms} ห้อง
                       </span>
                     </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 xl:grid-cols-11 gap-1.5">
-                      {building.rooms.map((room) => (
-                        <RoomStatusCard key={room.id} room={room} />
-                      ))}
-                    </div>
+                    {(() => {
+                      const hasFloors = building.rooms.some((r) => r.floor != null)
+                      if (!hasFloors) {
+                        return (
+                          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 xl:grid-cols-11 gap-1.5">
+                            {building.rooms.map((room) => (
+                              <RoomStatusCard key={room.id} room={room} />
+                            ))}
+                          </div>
+                        )
+                      }
+                      return (
+                        <div className="space-y-3">
+                          {groupByFloor(building.rooms).map(([floor, rooms]) => (
+                            <div key={floor ?? 'none'}>
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                  {floor != null ? `ชั้น ${floor}` : 'ไม่ระบุชั้น'}
+                                </span>
+                                <div className="flex-1 h-px bg-gray-100" />
+                              </div>
+                              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 xl:grid-cols-11 gap-1.5">
+                                {rooms.map((room) => (
+                                  <RoomStatusCard key={room.id} room={room} />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>
@@ -187,11 +228,28 @@ export function DashboardContent({ initialCampuses }: Props) {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-1">
-                        {building.rooms.map((room) => (
-                          <RoomDot key={room.id} room={room} />
-                        ))}
-                      </div>
+                      {(() => {
+                        const hasFloors = building.rooms.some((r) => r.floor != null)
+                        if (!hasFloors) {
+                          return (
+                            <div className="flex flex-wrap gap-1">
+                              {building.rooms.map((room) => <RoomDot key={room.id} room={room} />)}
+                            </div>
+                          )
+                        }
+                        return (
+                          <div className="space-y-1">
+                            {groupByFloor(building.rooms).map(([floor, rooms]) => (
+                              <div key={floor ?? 'none'} className="flex items-center gap-1 flex-wrap">
+                                <span className="text-[9px] font-bold text-gray-300 w-5 text-right shrink-0">
+                                  {floor != null ? `F${floor}` : '—'}
+                                </span>
+                                {rooms.map((room) => <RoomDot key={room.id} room={room} />)}
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })()}
                     </div>
                   )
                 })}
