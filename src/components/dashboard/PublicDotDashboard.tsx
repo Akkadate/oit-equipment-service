@@ -20,6 +20,20 @@ const STATUS_LABEL: Record<string, string> = {
   unchecked: 'ยังไม่ตรวจ',
 }
 
+function groupByFloor(rooms: RoomSummary[]): [number | null, RoomSummary[]][] {
+  const map = new Map<number | null, RoomSummary[]>()
+  for (const room of rooms) {
+    const key = room.floor ?? null
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(room)
+  }
+  return [...map.entries()].sort(([a], [b]) => {
+    if (a === null) return 1
+    if (b === null) return -1
+    return a - b
+  })
+}
+
 interface Props {
   initialCampuses: CampusSummary[]
 }
@@ -105,11 +119,32 @@ export function PublicDotDashboard({ initialCampuses }: Props) {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1">
-                    {building.rooms.map((room) => (
-                      <PublicRoomDot key={room.id} room={room} />
-                    ))}
-                  </div>
+                  {(() => {
+                    const hasFloors = building.rooms.some((r) => r.floor != null)
+                    if (!hasFloors) {
+                      return (
+                        <div className="flex flex-wrap gap-1">
+                          {building.rooms.map((room) => (
+                            <PublicRoomDot key={room.id} room={room} />
+                          ))}
+                        </div>
+                      )
+                    }
+                    return (
+                      <div className="space-y-1">
+                        {groupByFloor(building.rooms).map(([floor, rooms]) => (
+                          <div key={floor ?? 'none'} className="flex items-center gap-1 flex-wrap">
+                            <span className="text-[9px] font-bold text-gray-300 w-5 text-right shrink-0">
+                              {floor != null ? `F${floor}` : '—'}
+                            </span>
+                            {rooms.map((room) => (
+                              <PublicRoomDot key={room.id} room={room} />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
                 </div>
               )
             })}
