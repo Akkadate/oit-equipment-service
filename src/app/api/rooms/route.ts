@@ -10,6 +10,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from('rooms')
     .select('*, building:buildings(id, code, name, campus:campuses(id, code, name))')
+    .order('sort_order')
     .order('code')
 
   if (buildingId) query = query.eq('building_id', buildingId)
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
       code: body.code,
       name: body.name || null,
       floor: body.floor ? Number(body.floor) : null,
+      sort_order: body.sortOrder != null ? Number(body.sortOrder) : 99,
     })
     .select('*, building:buildings(id, code, name, campus:campuses(id, code, name))')
     .single()

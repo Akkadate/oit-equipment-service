@@ -11,9 +11,9 @@ export async function GET() {
     .select(`
       id, code, name,
       buildings (
-        id, code, name,
+        id, code, name, sort_order,
         rooms (
-          id, code, name, floor, qr_token, created_at,
+          id, code, name, floor, qr_token, sort_order, created_at,
           equipment (
             id,
             equipment_inspections (
@@ -34,8 +34,12 @@ export async function GET() {
   // Compute room status from latest inspection per equipment
   const result = campuses?.map((campus: any) => ({
     ...campus,
-    buildings: campus.buildings.map((building: any) => {
-      const rooms = building.rooms.map((room: any) => {
+    buildings: [...campus.buildings]
+      .sort((a: any, b: any) => a.sort_order - b.sort_order || a.code.localeCompare(b.code))
+      .map((building: any) => {
+      const rooms = [...building.rooms]
+        .sort((a: any, b: any) => a.sort_order - b.sort_order || a.code.localeCompare(b.code, undefined, { numeric: true }))
+        .map((room: any) => {
         const latestStatuses: EquipmentStatus[] = room.equipment.map((eq: any) => {
           const sorted = [...eq.equipment_inspections].sort(
             (a: any, b: any) => new Date(b.inspected_at).getTime() - new Date(a.inspected_at).getTime()

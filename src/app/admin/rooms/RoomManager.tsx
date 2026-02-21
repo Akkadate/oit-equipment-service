@@ -12,6 +12,7 @@ interface Room {
   code: string
   name?: string
   floor?: number
+  sort_order?: number
   building: Building
   equipment_count?: number
 }
@@ -29,6 +30,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
   const [floor, setFloor] = useState('')
+  const [sortOrder, setSortOrder] = useState('')
   const [loading, setLoading] = useState(false)
   const [batchLoading, setBatchLoading] = useState(false)
 
@@ -38,6 +40,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
     setCode('')
     setName('')
     setFloor('')
+    setSortOrder('')
     setShowForm(true)
   }
 
@@ -47,6 +50,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
     setCode(r.code)
     setName(r.name ?? '')
     setFloor(r.floor ? String(r.floor) : '')
+    setSortOrder(r.sort_order != null ? String(r.sort_order) : '')
     setShowForm(true)
   }
 
@@ -59,7 +63,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buildingId, code, name, floor }),
+        body: JSON.stringify({ buildingId, code, name, floor, sortOrder: sortOrder !== '' ? Number(sortOrder) : 99 }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -215,6 +219,17 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
                 onChange={(e) => setFloor(e.target.value)}
               />
             </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">ลำดับแสดงผล</label>
+              <input
+                type="number"
+                min="1"
+                className="border rounded px-3 py-1.5 text-sm w-20"
+                placeholder="99"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              />
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -239,6 +254,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
+              <th className="px-4 py-3 text-left font-medium text-gray-600 w-12">ลำดับ</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">ห้อง</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">อาคาร</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">วิทยาเขต</th>
@@ -250,13 +266,14 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
           <tbody className="divide-y">
             {rooms.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                   ยังไม่มีห้องเรียน
                 </td>
               </tr>
             ) : (
               rooms.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-center text-xs text-gray-400 tabular-nums">{r.sort_order ?? 99}</td>
                   <td className="px-4 py-3">
                     <p className="font-medium">{r.code}</p>
                     {r.name && <p className="text-gray-400 text-xs">{r.name}</p>}

@@ -24,6 +24,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       code: body.code,
       name: body.name || null,
       floor: body.floor ? Number(body.floor) : null,
+      sort_order: body.sortOrder != null ? Number(body.sortOrder) : 99,
     })
     .eq('id', id)
     .select('*, building:buildings(id, code, name, campus:campuses(id, code, name))')

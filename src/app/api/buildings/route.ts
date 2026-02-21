@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from('buildings')
     .select('*, campus:campuses(id, code, name)')
+    .order('sort_order')
     .order('name')
 
   if (campusId) query = query.eq('campus_id', campusId)
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
   const body = await req.json()
   const { data, error } = await supabase
     .from('buildings')
-    .insert({ campus_id: body.campusId, code: body.code, name: body.name })
+    .insert({ campus_id: body.campusId, code: body.code, name: body.name, sort_order: body.sortOrder != null ? Number(body.sortOrder) : 99 })
     .select('*, campus:campuses(id, code, name)')
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

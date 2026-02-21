@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 interface Campus { id: string; code: string; name: string }
-interface Building { id: string; code: string; name: string; campus: Campus }
+interface Building { id: string; code: string; name: string; campus: Campus; sort_order?: number }
 
 interface Props {
   buildings: Building[]
@@ -18,6 +18,7 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
   const [campusId, setCampusId] = useState('')
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
+  const [sortOrder, setSortOrder] = useState('')
   const [loading, setLoading] = useState(false)
 
   function openAdd() {
@@ -25,6 +26,7 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
     setCampusId(campuses[0]?.id ?? '')
     setCode('')
     setName('')
+    setSortOrder('')
     setShowForm(true)
   }
 
@@ -33,6 +35,7 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
     setCampusId(b.campus?.id ?? '')
     setCode(b.code)
     setName(b.name)
+    setSortOrder(b.sort_order != null ? String(b.sort_order) : '')
     setShowForm(true)
   }
 
@@ -45,7 +48,7 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campusId, code, name }),
+        body: JSON.stringify({ campusId, code, name, sortOrder: sortOrder !== '' ? Number(sortOrder) : 99 }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -126,6 +129,17 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
                 required
               />
             </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">ลำดับแสดงผล</label>
+              <input
+                type="number"
+                min="1"
+                className="border rounded px-3 py-1.5 text-sm w-20"
+                placeholder="99"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              />
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -150,6 +164,7 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
+              <th className="px-4 py-3 text-left font-medium text-gray-600 w-12">ลำดับ</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">รหัส</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">ชื่ออาคาร</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">วิทยาเขต</th>
@@ -159,13 +174,14 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
           <tbody className="divide-y">
             {buildings.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
                   ยังไม่มีอาคาร
                 </td>
               </tr>
             ) : (
               buildings.map((b) => (
                 <tr key={b.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-center text-xs text-gray-400 tabular-nums">{b.sort_order ?? 99}</td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{b.code}</td>
                   <td className="px-4 py-3 font-medium">{b.name}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{b.campus?.name}</td>
