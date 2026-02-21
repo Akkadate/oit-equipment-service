@@ -50,6 +50,12 @@ export type HistoryRow = {
   inspected_date: string; room_code: string; building_name: string
   campus_name: string; equipment_count: number; damaged_count: number
 }
+export type WeeklyInspectionRow = {
+  room_id: string; campus_name: string; building_name: string
+  floor: number | null; room_code: string
+  last_inspected_at: string | null; room_status: string
+  damaged_count: number; pending_repl_count: number; pending_repairs: number
+}
 
 export type ReportsTabsProps = {
   summary: ExecutiveSummary
@@ -62,6 +68,7 @@ export type ReportsTabsProps = {
   equipRepairs: EquipRepairRow[]
   pendingRepairs: PendingRepairRow[]
   history: HistoryRow[]
+  weeklyInspection: WeeklyInspectionRow[]
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -78,7 +85,7 @@ function fmtDate(d: string | null) {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-type TabId = 'equipment' | 'repairs' | 'history'
+type TabId = 'equipment' | 'repairs' | 'history' | 'weekly'
 
 // ── Main component ─────────────────────────────────────────────────────────
 export function ReportsTabs({
@@ -92,6 +99,7 @@ export function ReportsTabs({
   equipRepairs,
   pendingRepairs,
   history,
+  weeklyInspection,
 }: ReportsTabsProps) {
   const [tab, setTab] = useState<TabId>('equipment')
 
@@ -109,6 +117,7 @@ export function ReportsTabs({
       badge: pendingRepairCount > 0 ? pendingRepairCount : undefined,
     },
     { id: 'history', label: 'ประวัติการตรวจสอบ' },
+    { id: 'weekly', label: 'ตรวจสอบประจำสัปดาห์' },
   ]
 
   return (
@@ -452,6 +461,59 @@ export function ReportsTabs({
             </ReportCard>
           )}
 
+          {/* ── Tab 4: ตรวจสอบประจำสัปดาห์ ──────────────────────── */}
+          {tab === 'weekly' && (
+            <ReportCard
+              title={`วันที่ตรวจสอบล่าสุดรายห้อง (${weeklyInspection.length} ห้อง)`}
+              exportType="weekly-inspection"
+            >
+              {weeklyInspection.length === 0 ? <Empty /> : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-gray-500">
+                        <Th>วิทยาเขต</Th>
+                        <Th>อาคาร</Th>
+                        <Th align="right">ชั้น</Th>
+                        <Th>ห้อง</Th>
+                        <Th>ตรวจสอบล่าสุด</Th>
+                        <Th>สถานะ</Th>
+                        <Th align="right">แจ้งซ่อมค้าง</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {weeklyInspection.map((r) => (
+                        <tr key={r.room_id} className="border-b border-gray-50 hover:bg-gray-50">
+                          <Td>{r.campus_name}</Td>
+                          <Td>{r.building_name}</Td>
+                          <Td align="right">
+                            {r.floor != null
+                              ? <span className="text-gray-500">{r.floor}</span>
+                              : <span className="text-gray-300">—</span>}
+                          </Td>
+                          <Td bold>{r.room_code}</Td>
+                          <Td>
+                            {r.last_inspected_at
+                              ? <span>{fmtDate(r.last_inspected_at)}</span>
+                              : <span className="text-gray-300">ยังไม่เคยตรวจ</span>}
+                          </Td>
+                          <Td>
+                            <WeeklyStatusBadge row={r} />
+                          </Td>
+                          <Td align="right">
+                            {r.pending_repairs > 0
+                              ? <span className="text-orange-500 font-medium">🔧 {r.pending_repairs}</span>
+                              : <span className="text-gray-300">—</span>}
+                          </Td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </ReportCard>
+          )}
+
         </div>
       </div>
     </>
@@ -519,6 +581,24 @@ function Td({ children, align = 'left', bold = false }: { children?: React.React
       {children}
     </td>
   )
+}
+
+function WeeklyStatusBadge({ row }: { row: WeeklyInspectionRow }) {
+  if (row.room_status === 'unchecked')
+    return <span className="text-gray-400">ยังไม่ตรวจ</span>
+  if (row.room_status === 'pending_replacement')
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
+        รอเปลี่ยน · {row.pending_repl_count} รายการ
+      </span>
+    )
+  if (row.room_status === 'damaged')
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-full font-medium">
+        ชำรุด · {row.damaged_count} รายการ
+      </span>
+    )
+  return <span className="text-[10px] text-emerald-600">ปกติ</span>
 }
 
 function StatusBadge({ status }: { status: string }) {

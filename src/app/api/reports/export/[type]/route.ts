@@ -85,6 +85,12 @@ const REPORTS: Record<string, ReportDef> = {
     headers: ['วันที่', 'ห้อง', 'อาคาร', 'วิทยาเขต', 'อุปกรณ์ที่ตรวจ', 'พบปัญหา'],
     keys: ['inspected_date', 'room_code', 'building_name', 'campus_name', 'equipment_count', 'damaged_count'],
   },
+  'weekly-inspection': {
+    rpc: 'rpt_weekly_inspection',
+    filename: 'ตรวจสอบประจำสัปดาห์',
+    headers: ['วิทยาเขต', 'อาคาร', 'ชั้น', 'ห้อง', 'ตรวจสอบล่าสุด', 'สถานะ', 'ชำรุด(รายการ)', 'รอเปลี่ยน(รายการ)', 'แจ้งซ่อมค้าง'],
+    keys: ['campus_name', 'building_name', 'floor', 'room_code', 'last_inspected_at', 'room_status', 'damaged_count', 'pending_repl_count', 'pending_repairs'],
+  },
 }
 
 // ── Route handler ──────────────────────────────────────────────────────────

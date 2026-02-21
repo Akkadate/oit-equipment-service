@@ -6,6 +6,7 @@ import { ReportsTabs } from './ReportsTabs'
 import type {
   ExecutiveSummary, StatusRow, PendingReplRow, NotInspectedRow,
   MonthlyRow, RoomRepairRow, EquipRepairRow, PendingRepairRow, HistoryRow,
+  WeeklyInspectionRow,
 } from './ReportsTabs'
 
 export const dynamic = 'force-dynamic'
@@ -27,6 +28,7 @@ export default async function ReportsPage() {
     { data: equipRepairsRaw },
     { data: pendingRepairsRaw },
     { data: historyRaw },
+    { data: weeklyRaw },
   ] = await Promise.all([
     db.rpc('rpt_executive_summary'),
     db.rpc('rpt_equipment_status_summary'),
@@ -37,6 +39,7 @@ export default async function ReportsPage() {
     db.rpc('rpt_equipment_most_repairs', { limit_count: 10 }),
     db.rpc('rpt_repair_pending'),
     db.rpc('rpt_inspection_history', { limit_count: 30 }),
+    db.rpc('rpt_weekly_inspection'),
   ])
 
   const summary = (summaryRaw as ExecutiveSummary) ?? ({} as ExecutiveSummary)
@@ -72,6 +75,7 @@ export default async function ReportsPage() {
           equipRepairs={(equipRepairsRaw as EquipRepairRow[]) ?? []}
           pendingRepairs={(pendingRepairsRaw as PendingRepairRow[]) ?? []}
           history={(historyRaw as HistoryRow[]) ?? []}
+          weeklyInspection={(weeklyRaw as WeeklyInspectionRow[]) ?? []}
         />
       </main>
     </div>
