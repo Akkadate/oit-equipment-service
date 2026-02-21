@@ -38,15 +38,18 @@ export async function sendPushToAll(payload: PushPayload): Promise<void> {
       webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
         payloadStr,
+        { TTL: 3600 }, // เก็บไว้ 1 ชม. — ถ้าโทรศัพท์ปิดหน้าจอ/หลับ จะได้รับเมื่อตื่นขึ้น
       )
     )
   )
 
-  // ลบ subscription ที่ browser ยกเลิกไปแล้ว (410 Gone)
+  // ลบ subscription ที่ใช้ไม่ได้แล้ว (410 Gone หรือ 404 Not Found)
   const expiredEndpoints = (subs as Sub[])
     .filter((_, i) => {
       const r = results[i]
-      return r.status === 'rejected' && (r.reason as { statusCode?: number })?.statusCode === 410
+      if (r.status !== 'rejected') return false
+      const code = (r.reason as { statusCode?: number })?.statusCode
+      return code === 410 || code === 404
     })
     .map((s) => s.endpoint)
 

@@ -65,14 +65,15 @@ export async function POST(req: NextRequest) {
       reporterPhone: reporter_phone,
       description,
     })
-    sendTelegramNotify(msg).catch(() => {}) // fire-and-forget
-
-    // Web Push — แจ้งเตือน admin/staff ทุกคนที่ subscribe ไว้
-    sendPushToAll({
-      title: `🔧 แจ้งซ่อม · ห้อง ${room?.code ?? ''}`,
-      body: `${eqData.name} — ${description}`,
-      url: '/admin/repairs',
-    }).catch(() => {})
+    // await ทั้งคู่เพื่อให้ส่งได้ก่อน serverless process ถูกยกเลิก
+    await Promise.allSettled([
+      sendTelegramNotify(msg),
+      sendPushToAll({
+        title: `🔧 แจ้งซ่อม · ห้อง ${room?.code ?? ''}`,
+        body: `${eqData.name} — ${description}`,
+        url: '/admin/repairs',
+      }),
+    ])
   }
 
   return NextResponse.json(data, { status: 201 })
