@@ -1,11 +1,10 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get('next') ?? '/'
 
@@ -28,8 +27,8 @@ function LoginForm() {
       return
     }
 
-    router.push(next)
-    router.refresh()
+    // Full page reload so middleware sees the new session cookie immediately
+    window.location.href = next
   }
 
   return (
