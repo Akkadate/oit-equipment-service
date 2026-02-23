@@ -6,6 +6,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from '@/components/ui/sheet'
 
 interface Campus {
   id: string
@@ -124,35 +127,28 @@ export function CampusManager({ campuses: initial }: Props) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg"
-        >
-          + เพิ่มวิทยาเขต
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-          <h3 className="font-medium text-gray-800 mb-3">
-            {editing ? 'แก้ไขวิทยาเขต' : 'เพิ่มวิทยาเขต'}
-          </h3>
-          <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
+      {/* Sheet drawer — add / edit */}
+      <Sheet open={showForm} onOpenChange={setShowForm}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          <SheetHeader className="mb-6">
+            <SheetTitle>{editing ? 'แก้ไขวิทยาเขต' : 'เพิ่มวิทยาเขต'}</SheetTitle>
+          </SheetHeader>
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">รหัส (code)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">รหัส (code)</label>
               <input
-                className="border rounded px-3 py-1.5 text-sm w-36"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="เช่น NBU-NORTH"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 required
+                autoFocus
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">ชื่อวิทยาเขต</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">ชื่อวิทยาเขต</label>
               <input
-                className="border rounded px-3 py-1.5 text-sm w-64"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="เช่น วิทยาเขตนอร์ทกรุงเทพ"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -160,35 +156,45 @@ export function CampusManager({ campuses: initial }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">ลำดับแสดง</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">ลำดับแสดง</label>
               <input
                 type="number"
                 min="1"
-                className="border rounded px-3 py-1.5 text-sm w-20"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="99"
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3 pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded disabled:opacity-50"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
               >
                 {loading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="text-sm px-4 py-1.5 rounded border hover:bg-gray-50"
+                className="flex-1 text-sm py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 ยกเลิก
               </button>
             </div>
           </form>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex justify-end mb-4">
+        <button
+          type="button"
+          onClick={openAdd}
+          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg"
+        >
+          + เพิ่มวิทยาเขต
+        </button>
+      </div>
 
       <div className="bg-white rounded-xl border overflow-hidden">
         <table className="w-full text-sm">

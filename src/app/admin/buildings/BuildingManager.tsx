@@ -6,6 +6,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from '@/components/ui/sheet'
 
 interface Campus { id: string; code: string; name: string }
 interface Building { id: string; code: string; name: string; campus: Campus; sort_order?: number }
@@ -118,25 +121,18 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg"
-        >
-          + เพิ่มอาคาร
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-          <h3 className="font-medium text-gray-800 mb-3">
-            {editing ? 'แก้ไขอาคาร' : 'เพิ่มอาคาร'}
-          </h3>
-          <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
+      {/* Sheet drawer — add / edit */}
+      <Sheet open={showForm} onOpenChange={setShowForm}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          <SheetHeader className="mb-6">
+            <SheetTitle>{editing ? 'แก้ไขอาคาร' : 'เพิ่มอาคาร'}</SheetTitle>
+          </SheetHeader>
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">วิทยาเขต</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">วิทยาเขต</label>
               <select
-                className="border rounded px-3 py-1.5 text-sm w-52"
+                title="เลือกวิทยาเขต"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={campusId}
                 onChange={(e) => setCampusId(e.target.value)}
                 required
@@ -148,19 +144,20 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">รหัสอาคาร</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">รหัสอาคาร</label>
               <input
-                className="border rounded px-3 py-1.5 text-sm w-24"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="เช่น A, IT"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 required
+                autoFocus
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">ชื่ออาคาร</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">ชื่ออาคาร</label>
               <input
-                className="border rounded px-3 py-1.5 text-sm w-52"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="เช่น อาคารเทคโนโลยีสารสนเทศ"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -168,35 +165,45 @@ export function BuildingManager({ buildings: initial, campuses }: Props) {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">ลำดับแสดงผล</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">ลำดับแสดงผล</label>
               <input
                 type="number"
                 min="1"
-                className="border rounded px-3 py-1.5 text-sm w-20"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="99"
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3 pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded disabled:opacity-50"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
               >
                 {loading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="text-sm px-4 py-1.5 rounded border hover:bg-gray-50"
+                className="flex-1 text-sm py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 ยกเลิก
               </button>
             </div>
           </form>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex justify-end mb-4">
+        <button
+          type="button"
+          onClick={openAdd}
+          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg"
+        >
+          + เพิ่มอาคาร
+        </button>
+      </div>
 
       <div className="bg-white rounded-xl border overflow-hidden">
         <table className="w-full text-sm">

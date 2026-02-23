@@ -8,6 +8,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from '@/components/ui/sheet'
 
 interface Campus { id: string; code: string; name: string }
 interface Building { id: string; code: string; name: string; campus: Campus }
@@ -110,7 +113,6 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
     if (rooms.length === 0) return
     setBatchLoading(true)
     try {
-      // Fetch all QR data URLs in parallel
       const results = await Promise.all(
         rooms.map(async (r) => {
           const res = await fetch(`/api/rooms/${r.id}/qr`)
@@ -119,19 +121,15 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
         })
       )
 
-      // Create composite images (QR + room text) in parallel
       const composites = await Promise.all(
         results.map(({ room, dataUrl }) =>
           createCompositeQR(dataUrl, room.code, room.building?.name ?? '', room.building?.campus?.name ?? '')
         )
       )
 
-      // A4: margin 10mm → printable 190mm → 4×45mm + 3×3mm = 189mm ✓
-      // A3: margin  6mm → printable 285mm → 6×45mm + 5×3mm = 285mm ✓
       const isA3 = size === 'A3'
       const cols   = isA3 ? 6 : 4
       const margin = isA3 ? '6mm' : '10mm'
-      // fixed item size: 4.5cm × 6.3cm, gap: 0.3cm
       const itemW  = '45mm'
       const itemH  = '63mm'
       const gap    = '3mm'
@@ -213,6 +211,93 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Sheet drawer — add / edit */}
+      <Sheet open={showForm} onOpenChange={setShowForm}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader className="mb-6">
+            <SheetTitle>{editing ? 'แก้ไขห้องเรียน' : 'เพิ่มห้องเรียน'}</SheetTitle>
+          </SheetHeader>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">อาคาร</label>
+              <select
+                title="เลือกอาคาร"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={buildingId}
+                onChange={(e) => setBuildingId(e.target.value)}
+                required
+              >
+                <option value="">-- เลือกอาคาร --</option>
+                {buildings.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.campus?.name} · {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">รหัสห้อง *</label>
+              <input
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="เช่น IT301"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">ชื่อห้อง (ไม่บังคับ)</label>
+              <input
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="เช่น ห้องปฏิบัติการคอมพิวเตอร์"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">ชั้น</label>
+                <input
+                  type="number"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="3"
+                  value={floor}
+                  onChange={(e) => setFloor(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">ลำดับแสดงผล</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="99"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
+              >
+                {loading ? 'กำลังบันทึก...' : 'บันทึก'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="flex-1 text-sm py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                ยกเลิก
+              </button>
+            </div>
+          </form>
+        </SheetContent>
+      </Sheet>
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <button
@@ -240,89 +325,6 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
           + เพิ่มห้องเรียน
         </button>
       </div>
-
-      {showForm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-          <h3 className="font-medium text-gray-800 mb-3">
-            {editing ? 'แก้ไขห้องเรียน' : 'เพิ่มห้องเรียน'}
-          </h3>
-          <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">อาคาร</label>
-              <select
-                title="เลือกอาคาร"
-                className="border rounded px-3 py-1.5 text-sm w-52"
-                value={buildingId}
-                onChange={(e) => setBuildingId(e.target.value)}
-                required
-              >
-                <option value="">-- เลือกอาคาร --</option>
-                {buildings.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.campus?.name} · {b.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">รหัสห้อง *</label>
-              <input
-                className="border rounded px-3 py-1.5 text-sm w-28"
-                placeholder="เช่น IT301"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">ชื่อห้อง (ไม่บังคับ)</label>
-              <input
-                className="border rounded px-3 py-1.5 text-sm w-52"
-                placeholder="เช่น ห้องปฏิบัติการคอมพิวเตอร์"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">ชั้น</label>
-              <input
-                type="number"
-                className="border rounded px-3 py-1.5 text-sm w-16"
-                placeholder="3"
-                value={floor}
-                onChange={(e) => setFloor(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">ลำดับแสดงผล</label>
-              <input
-                type="number"
-                min="1"
-                className="border rounded px-3 py-1.5 text-sm w-20"
-                placeholder="99"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded disabled:opacity-50"
-              >
-                {loading ? 'กำลังบันทึก...' : 'บันทึก'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="text-sm px-4 py-1.5 rounded border hover:bg-gray-50"
-              >
-                ยกเลิก
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
       <div className="bg-white rounded-xl border overflow-hidden">
         <table className="w-full text-sm">

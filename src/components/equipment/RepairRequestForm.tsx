@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Equipment } from '@/types'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -31,7 +30,6 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
   const [submitted, setSubmitted] = useState(false)
   const [prefilled, setPrefilled] = useState(false)
 
-  // Load saved name/phone from localStorage on first render
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(LS_KEY) ?? '{}')
@@ -82,12 +80,10 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
 
     setSubmitting(true)
 
-    // Save reporter info to localStorage for next time
     try {
       localStorage.setItem(LS_KEY, JSON.stringify({ name: reportedBy.trim(), phone: phone.trim() }))
     } catch { /* ignore */ }
 
-    // ออฟไลน์ → บันทึกลง queue แล้ว sync ทีหลัง
     if (!navigator.onLine) {
       selected.forEach((s) => {
         enqueueRepair({
@@ -138,16 +134,18 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
 
   if (submitted) {
     return (
-      <div className="text-center py-12">
-        <p className="text-4xl mb-4">🔧</p>
-        <h2 className="text-xl font-bold text-gray-800">แจ้งซ่อมเรียบร้อยแล้ว</h2>
-        <p className="text-gray-500 text-sm mt-2">
-          เจ้าหน้าที่จะดำเนินการโดยเร็วที่สุด
+      <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-5 shadow-sm">
+          <span className="text-4xl">✅</span>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800">แจ้งซ่อมเรียบร้อยแล้ว</h2>
+        <p className="text-gray-500 text-sm mt-2 max-w-xs">
+          เจ้าหน้าที่ได้รับแจ้งแล้ว และจะดำเนินการโดยเร็วที่สุด
         </p>
         <button
           type="button"
-          onClick={() => { setSubmitted(false); setSelected([]); setReportedBy(''); setPhone('') }}
-          className="mt-4 text-blue-600 text-sm hover:underline"
+          onClick={() => { setSubmitted(false); setSelected([]) }}
+          className="mt-8 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-6 py-3 rounded-xl transition-colors"
         >
           แจ้งซ่อมอีกครั้ง
         </button>
@@ -159,68 +157,70 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Equipment selection */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-gray-700">
+        <p className="text-sm font-semibold text-gray-700">
           เลือกอุปกรณ์ที่มีปัญหา <span className="text-red-500">*</span>
         </p>
-        {equipment.map((eq: any) => (
-          <div key={eq.id} className="space-y-2">
-            <button
-              type="button"
-              onClick={() => toggleEquipment(eq.id)}
-              className={`w-full text-left border rounded-lg px-3 py-2.5 transition-all ${
-                isSelected(eq.id)
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
+        <p className="text-xs text-gray-400">สามารถเลือกได้หลายรายการ</p>
+        <div className="space-y-2.5 mt-2">
+          {equipment.map((eq: any) => (
+            <div key={eq.id} className="space-y-2.5">
+              <button
+                type="button"
+                onClick={() => toggleEquipment(eq.id)}
+                className={`w-full text-left border-2 rounded-xl px-4 py-4 transition-all active:scale-[0.99] ${
+                  isSelected(eq.id)
+                    ? 'border-blue-500 bg-blue-50 shadow-sm'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
                   <span
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-[10px] ${
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-sm font-bold transition-colors ${
                       isSelected(eq.id)
                         ? 'bg-blue-600 border-blue-600 text-white'
-                        : 'border-gray-300'
+                        : 'border-gray-300 bg-white'
                     }`}
                   >
                     {isSelected(eq.id) && '✓'}
                   </span>
-                  <span className="font-medium text-gray-900 text-sm truncate">{eq.name}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 text-sm leading-tight">{eq.name}</p>
+                    <p className="text-xs text-gray-400 font-mono mt-0.5">{eq.asset_code}</p>
+                  </div>
                 </div>
-                <span className="text-xs text-gray-400 font-mono flex-shrink-0">{eq.asset_code}</span>
-              </div>
-            </button>
+              </button>
 
-            {isSelected(eq.id) && (
-              <div className="ml-4 space-y-2">
-                <Textarea
-                  placeholder={`รายละเอียดปัญหาของ ${eq.name}...`}
-                  value={selected.find((s) => s.id === eq.id)?.description ?? ''}
-                  onChange={(e) => setDescription(eq.id, e.target.value)}
-                  className="text-sm h-20 resize-none"
-                  required
-                />
-                <PhotoCapture
-                  equipmentId={eq.id}
-                  uploadUrl="/api/repairs/upload"
-                  onUploaded={(url) => setPhotoUrl(eq.id, url)}
-                />
-              </div>
-            )}
-          </div>
-        ))}
+              {isSelected(eq.id) && (
+                <div className="ml-2 pl-4 border-l-2 border-blue-200 space-y-2.5">
+                  <Textarea
+                    placeholder={`อธิบายปัญหาของ ${eq.name}...`}
+                    value={selected.find((s) => s.id === eq.id)?.description ?? ''}
+                    onChange={(e) => setDescription(eq.id, e.target.value)}
+                    className="text-sm h-24 resize-none rounded-xl"
+                    required
+                  />
+                  <PhotoCapture
+                    equipmentId={eq.id}
+                    uploadUrl="/api/repairs/upload"
+                    onUploaded={(url) => setPhotoUrl(eq.id, url)}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Reporter info */}
-      <div className="space-y-4 bg-gray-50 rounded-xl p-4">
+      <div className="space-y-4 bg-gray-50 rounded-2xl p-4 border border-gray-100">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">ข้อมูลผู้แจ้ง</p>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="reported_by">
+            <Label htmlFor="reported_by" className="text-sm font-medium">
               ชื่อผู้แจ้ง <span className="text-red-500">*</span>
             </Label>
             {prefilled && (
-              <span className="text-[11px] text-blue-500">
-                ✓ จำชื่อไว้ให้แล้ว
-              </span>
+              <span className="text-[11px] text-blue-500 font-medium">✓ จำชื่อไว้ให้แล้ว</span>
             )}
           </div>
           <Input
@@ -229,30 +229,38 @@ export function RepairRequestForm({ equipment, roomId }: Props) {
             value={reportedBy}
             onChange={(e) => { setReportedBy(e.target.value); setPrefilled(false) }}
             required
+            className="h-12 rounded-xl text-base"
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="phone">เบอร์โทรศัพท์</Label>
+          <Label htmlFor="phone" className="text-sm font-medium">เบอร์โทรศัพท์</Label>
           <Input
             id="phone"
             type="tel"
             placeholder="0812345678"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            className="h-12 rounded-xl text-base"
           />
         </div>
       </div>
 
-      <Button
+      {/* Submit */}
+      <button
         type="submit"
         disabled={submitting || selected.length === 0}
-        className="w-full"
-        size="lg"
+        className={`w-full py-4 rounded-2xl text-base font-semibold transition-all active:scale-[0.99] shadow-sm ${
+          selected.length === 0 || submitting
+            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-blue-200'
+        }`}
       >
         {submitting
           ? 'กำลังส่ง...'
-          : `แจ้งซ่อม ${selected.length > 0 ? `(${selected.length} รายการ)` : ''}`}
-      </Button>
+          : selected.length > 0
+            ? `ส่งแจ้งซ่อม ${selected.length} รายการ`
+            : 'เลือกอุปกรณ์ที่มีปัญหาก่อน'}
+      </button>
     </form>
   )
 }

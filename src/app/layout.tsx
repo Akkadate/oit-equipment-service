@@ -43,7 +43,7 @@ export default function RootLayout({
       <body className="font-prompt antialiased">
         {children}
         <Footer />
-        <Toaster richColors position="top-right" />
+        <Toaster richColors position="bottom-right" />
       </body>
     </html>
   );

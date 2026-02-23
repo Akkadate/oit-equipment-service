@@ -5,11 +5,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { useEffect, useRef, useState } from 'react'
 import { PushToggle } from './PushToggle'
-import { LayoutDashboard, Wrench, BarChart3, Settings2, ChevronDown, Menu, X, LogOut, User } from 'lucide-react'
+import { LayoutDashboard, Wrench, BarChart3, PieChart, Settings2, ChevronDown, Menu, X, LogOut, User } from 'lucide-react'
 
 const mainLinks = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/repairs', label: 'แจ้งซ่อม', icon: Wrench },
+  { href: '/admin/stats', label: 'สถิติ', icon: PieChart },
   { href: '/admin/reports', label: 'รายงาน', icon: BarChart3 },
 ]
 
