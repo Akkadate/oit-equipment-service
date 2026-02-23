@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface Props {
   types: { id: number; name: string }[]
@@ -78,6 +82,10 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
   // Pagination
   const [page, setPage] = useState(1)
   useEffect(() => { setPage(1) }, [search, filterType, filterRoom])
+
+  // Confirm dialog
+  const [confirmState, setConfirmState] = useState<{ type: 'delete' | 'retire'; eq: any } | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   // Repair history modal
   const [repairEq, setRepairEq] = useState<any | null>(null)
@@ -160,24 +168,30 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
     }
   }
 
-  async function handleDelete(eq: any) {
-    if (!confirm(`ลบ "${eq.name}" (${eq.asset_code}) ออกจากระบบถาวรใช่ไหม?\nข้อมูลที่เกี่ยวข้องทั้งหมดจะถูกลบและไม่สามารถกู้คืนได้`)) return
-    const res = await fetch(`/api/equipment/${eq.id}`, { method: 'DELETE' })
-    if (!res.ok) { toast.error('ลบไม่สำเร็จ'); return }
-    setItems((prev) => prev.filter((x) => x.id !== eq.id))
-    toast.success(`ลบ "${eq.name}" แล้ว`)
-  }
-
-  async function handleRetire(eq: any) {
-    if (!confirm(`จำหน่ายออก "${eq.name}" (${eq.asset_code}) ใช่ไหม?\nอุปกรณ์จะถูกบันทึกว่าจำหน่ายออกและซ่อนจากรายการปกติ`)) return
-    const res = await fetch(`/api/equipment/${eq.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ retired_at: new Date().toISOString() }),
-    })
-    if (!res.ok) { toast.error('จำหน่ายออกไม่สำเร็จ'); return }
-    setItems((prev) => prev.filter((x) => x.id !== eq.id))
-    toast.success(`จำหน่ายออก "${eq.name}" แล้ว`)
+  async function executeConfirm() {
+    if (!confirmState) return
+    const { type, eq } = confirmState
+    setConfirming(true)
+    try {
+      if (type === 'delete') {
+        const res = await fetch(`/api/equipment/${eq.id}`, { method: 'DELETE' })
+        if (!res.ok) { toast.error('ลบไม่สำเร็จ'); return }
+        setItems((prev) => prev.filter((x) => x.id !== eq.id))
+        toast.success(`ลบ "${eq.name}" แล้ว`)
+      } else {
+        const res = await fetch(`/api/equipment/${eq.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ retired_at: new Date().toISOString() }),
+        })
+        if (!res.ok) { toast.error('จำหน่ายออกไม่สำเร็จ'); return }
+        setItems((prev) => prev.filter((x) => x.id !== eq.id))
+        toast.success(`จำหน่ายออก "${eq.name}" แล้ว`)
+      }
+      setConfirmState(null)
+    } finally {
+      setConfirming(false)
+    }
   }
 
 
@@ -268,6 +282,55 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
         {totalPages > 1 && <p className="text-xs text-gray-400">หน้า {safePage} / {totalPages}</p>}
       </div>
 
+
+      {/* Confirm Dialog */}
+      <AlertDialog open={!!confirmState} onOpenChange={(o) => { if (!o) setConfirmState(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            {confirmState?.type === 'delete' ? (
+              <>
+                <AlertDialogTitle className="text-red-600">ยืนยันการลบอุปกรณ์</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-2 text-sm">
+                    <p>คุณต้องการลบอุปกรณ์นี้ออกจากระบบถาวรใช่ไหม?</p>
+                    <div className="bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                      <p className="font-medium text-gray-900">{confirmState.eq.name}</p>
+                      <p className="text-xs text-gray-500 font-mono mt-0.5">{confirmState.eq.asset_code}</p>
+                    </div>
+                    <p className="text-red-600 text-xs">⚠️ ข้อมูลที่เกี่ยวข้องทั้งหมดจะถูกลบและไม่สามารถกู้คืนได้</p>
+                  </div>
+                </AlertDialogDescription>
+              </>
+            ) : (
+              <>
+                <AlertDialogTitle className="text-orange-600">ยืนยันการจำหน่ายออก</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-2 text-sm">
+                    <p>คุณต้องการบันทึกว่าอุปกรณ์นี้ถูกจำหน่ายออกแล้วใช่ไหม?</p>
+                    <div className="bg-orange-50 border border-orange-100 rounded-lg px-3 py-2">
+                      <p className="font-medium text-gray-900">{confirmState?.eq.name}</p>
+                      <p className="text-xs text-gray-500 font-mono mt-0.5">{confirmState?.eq.asset_code}</p>
+                    </div>
+                    <p className="text-orange-600 text-xs">อุปกรณ์จะถูกซ่อนจากรายการปกติ</p>
+                  </div>
+                </AlertDialogDescription>
+              </>
+            )}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirming}>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeConfirm}
+              disabled={confirming}
+              className={confirmState?.type === 'delete'
+                ? 'bg-red-600 hover:bg-red-700 focus:ring-red-600'
+                : 'bg-orange-500 hover:bg-orange-600 focus:ring-orange-500'}
+            >
+              {confirming ? 'กำลังดำเนินการ...' : confirmState?.type === 'delete' ? 'ลบถาวร' : 'จำหน่ายออก'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Repair History Modal */}
       {repairEq && (
@@ -425,11 +488,11 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
                         className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-200 rounded hover:bg-blue-50">
                         แก้ไข
                       </button>
-                      <button type="button" onClick={() => handleRetire(eq)}
+                      <button type="button" onClick={() => setConfirmState({ type: 'retire', eq })}
                         className="text-orange-600 hover:text-orange-800 text-xs px-2 py-1 border border-orange-200 rounded hover:bg-orange-50">
                         จำหน่ายออก
                       </button>
-                      <button type="button" onClick={() => handleDelete(eq)}
+                      <button type="button" onClick={() => setConfirmState({ type: 'delete', eq })}
                         className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50">
                         ลบ
                       </button>
