@@ -6,25 +6,30 @@ export const dynamic = 'force-dynamic'
 
 async function getData() {
   const supabase = createServiceClient()
-  const [roomsRes, buildingsRes] = await Promise.all([
+  const [roomsRes, buildingsRes, eqRes] = await Promise.all([
     supabase
       .from('rooms')
-      .select(`
-        id, code, name, floor,
-        building:buildings(id, code, name, campus:campuses(id, code, name)),
-        equipment_count:equipment(count)
-      `)
-      .is('equipment.retired_at', null)
+      .select('id, code, name, floor, sort_order, building:buildings(id, code, name, campus:campuses(id, code, name))')
       .order('code'),
     supabase
       .from('buildings')
       .select('*, campus:campuses(id, code, name)')
       .order('name'),
+    supabase
+      .from('equipment')
+      .select('room_id')
+      .is('retired_at', null),
   ])
+
+  // นับอุปกรณ์ที่ยังใช้งานอยู่ต่อห้อง
+  const countMap = new Map<string, number>()
+  for (const eq of eqRes.data ?? []) {
+    countMap.set(eq.room_id, (countMap.get(eq.room_id) ?? 0) + 1)
+  }
 
   const rooms = (roomsRes.data ?? []).map((r: any) => ({
     ...r,
-    equipment_count: r.equipment_count?.[0]?.count ?? 0,
+    equipment_count: countMap.get(r.id) ?? 0,
   }))
 
   return { rooms, buildings: buildingsRes.data ?? [] }
