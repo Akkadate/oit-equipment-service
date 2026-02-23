@@ -13,6 +13,16 @@ type ImportRow = {
   note?: string
 }
 
+// Parse dd/mm/yyyy, dd-mm-yyyy, or yyyy-mm-dd → ISO yyyy-mm-dd (server-side safety net)
+function toIsoDate(s: string | null | undefined): string | null {
+  if (!s?.trim()) return null
+  const t = s.trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t
+  const m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  return null
+}
+
 export async function POST(req: NextRequest) {
   const authClient = await createServerSupabaseClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -62,7 +72,7 @@ export async function POST(req: NextRequest) {
       name: row.name,
       asset_code: row.asset_code,
       serial_number: row.serial_number || null,
-      installed_at: row.installed_at || null,
+      installed_at: toIsoDate(row.installed_at),
       note: row.note || null,
     })
 
