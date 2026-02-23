@@ -160,6 +160,14 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
     }
   }
 
+  async function handleDelete(eq: any) {
+    if (!confirm(`ลบ "${eq.name}" (${eq.asset_code}) ออกจากระบบถาวรใช่ไหม?\nข้อมูลที่เกี่ยวข้องทั้งหมดจะถูกลบและไม่สามารถกู้คืนได้`)) return
+    const res = await fetch(`/api/equipment/${eq.id}`, { method: 'DELETE' })
+    if (!res.ok) { toast.error('ลบไม่สำเร็จ'); return }
+    setItems((prev) => prev.filter((x) => x.id !== eq.id))
+    toast.success(`ลบ "${eq.name}" แล้ว`)
+  }
+
   async function handleRetire(eq: any) {
     if (!confirm(`จำหน่ายออก "${eq.name}" (${eq.asset_code}) ใช่ไหม?\nอุปกรณ์จะถูกบันทึกว่าจำหน่ายออกและซ่อนจากรายการปกติ`)) return
     const res = await fetch(`/api/equipment/${eq.id}`, {
@@ -420,6 +428,10 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
                       <button type="button" onClick={() => handleRetire(eq)}
                         className="text-orange-600 hover:text-orange-800 text-xs px-2 py-1 border border-orange-200 rounded hover:bg-orange-50">
                         จำหน่ายออก
+                      </button>
+                      <button type="button" onClick={() => handleDelete(eq)}
+                        className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50">
+                        ลบ
                       </button>
                     </div>
                   </td>
