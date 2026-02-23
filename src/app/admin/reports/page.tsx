@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createServiceClient } from '@/lib/supabase'
 import { Navbar } from '@/components/shared/Navbar'
@@ -59,9 +60,20 @@ export default async function ReportsPage() {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <main className="max-w-7xl mx-auto px-3 sm:px-5 pt-5 pb-16">
-        <div className="mb-5">
-          <h1 className="text-lg font-bold text-gray-900">รายงาน</h1>
-          <p className="text-xs text-gray-400 mt-0.5">ข้อมูล ณ วันนี้ · ดึงจากฐานข้อมูลทั้งหมด ไม่จำกัดจำนวนแถว</p>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">รายงาน</h1>
+            <p className="text-xs text-gray-400 mt-0.5">ข้อมูล ณ วันนี้ · ดึงจากฐานข้อมูลทั้งหมด ไม่จำกัดจำนวนแถว</p>
+          </div>
+          <Link
+            href="/admin/reports/inventory"
+            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-700 hover:bg-blue-50 border border-gray-200 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+              <path d="M2 3h12v2H2zm0 4h12v2H2zm0 4h8v2H2z"/>
+            </svg>
+            ทะเบียนอุปกรณ์
+          </Link>
         </div>
 
         <ReportsTabs
