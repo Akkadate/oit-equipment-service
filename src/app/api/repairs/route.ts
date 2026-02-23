@@ -24,9 +24,11 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // กรองอุปกรณ์ที่จำหน่ายออกแล้วออก
-  const activeOnly = (data as any[]).filter((r) => r.equipment?.retired_at === null || r.equipment?.retired_at === undefined)
-  return NextResponse.json(activeOnly)
+  // กรองอุปกรณ์ที่จำหน่ายออกแล้วออก เฉพาะหน้าห้องเรียน (roomId) เท่านั้น
+  const result = roomId
+    ? (data as any[]).filter((r) => r.equipment?.retired_at === null || r.equipment?.retired_at === undefined)
+    : data
+  return NextResponse.json(result)
 }
 
 export async function POST(req: NextRequest) {
