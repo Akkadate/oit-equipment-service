@@ -20,6 +20,14 @@ function fmtDate(d: string | null) {
   return new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
 }
 
+function fmtDateCsv(d: string | null): string {
+  if (!d) return ''
+  const dt = new Date(d)
+  const day = String(dt.getDate()).padStart(2, '0')
+  const month = String(dt.getMonth() + 1).padStart(2, '0')
+  return `${day}/${month}/${dt.getFullYear()}`
+}
+
 function escCsv(v: unknown): string {
   const s = v === null || v === undefined ? '' : String(v)
   if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
@@ -42,7 +50,7 @@ function downloadCsv(rows: InventoryRow[]) {
         r.equipment_name,
         r.asset_code,
         r.serial_number,
-        r.installed_at ?? '',
+        fmtDateCsv(r.installed_at),
       ]
         .map(escCsv)
         .join(',')
