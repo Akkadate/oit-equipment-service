@@ -22,10 +22,8 @@ function fmtDate(d: string | null) {
 
 function fmtDateCsv(d: string | null): string {
   if (!d) return ''
-  const dt = new Date(d)
-  const day = String(dt.getDate()).padStart(2, '0')
-  const month = String(dt.getMonth() + 1).padStart(2, '0')
-  return `${day}/${month}/${dt.getFullYear()}`
+  // ISO format (yyyy-mm-dd) — import เข้า PostgreSQL ได้ถูกต้อง
+  return d.slice(0, 10)
 }
 
 function escCsv(v: unknown): string {
