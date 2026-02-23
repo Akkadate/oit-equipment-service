@@ -27,6 +27,18 @@ const emptyForm = {
 const ALL = '__all__'
 const PAGE_SIZE = 25
 
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'รอดำเนินการ',
+  in_progress: 'กำลังซ่อม',
+  resolved: 'ซ่อมแล้ว',
+  closed: 'ปิด',
+}
+const STATUS_COLOR: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-700',
+  in_progress: 'bg-blue-100 text-blue-700',
+  resolved: 'bg-green-100 text-green-700',
+  closed: 'bg-gray-100 text-gray-500',
+}
 
 export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
   const [items, setItems] = useState<any[]>(initial)
@@ -66,6 +78,23 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
   // Pagination
   const [page, setPage] = useState(1)
   useEffect(() => { setPage(1) }, [search, filterType, filterRoom])
+
+  // Repair history modal
+  const [repairEq, setRepairEq] = useState<any | null>(null)
+  const [repairs, setRepairs] = useState<any[]>([])
+  const [loadingRepairs, setLoadingRepairs] = useState(false)
+
+  async function openRepairs(eq: any) {
+    setRepairEq(eq)
+    setRepairs([])
+    setLoadingRepairs(true)
+    try {
+      const res = await fetch(`/api/repairs?equipmentId=${eq.id}`)
+      if (res.ok) setRepairs(await res.json())
+    } finally {
+      setLoadingRepairs(false)
+    }
+  }
 
   function set(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -232,6 +261,49 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
       </div>
 
 
+      {/* Repair History Modal */}
+      {repairEq && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setRepairEq(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs text-gray-400 mb-0.5">ประวัติการแจ้งซ่อม</p>
+                <p className="font-semibold text-gray-900">{repairEq.name}</p>
+                <p className="text-xs font-mono text-gray-500 mt-0.5">{repairEq.asset_code}</p>
+              </div>
+              <button type="button" onClick={() => setRepairEq(null)} className="text-gray-400 hover:text-gray-600 text-lg leading-none mt-0.5">×</button>
+            </div>
+            <div className="overflow-y-auto flex-1 px-5 py-4">
+              {loadingRepairs ? (
+                <p className="text-sm text-gray-400 text-center py-6">กำลังโหลด...</p>
+              ) : repairs.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-6">ไม่มีประวัติการแจ้งซ่อม</p>
+              ) : (
+                <div className="space-y-3">
+                  {repairs.map((r: any) => (
+                    <div key={r.id} className="border rounded-xl p-3.5">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLOR[r.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                          {STATUS_LABEL[r.status] ?? r.status}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(r.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-800">{r.description}</p>
+                      <p className="text-xs text-gray-500 mt-1">ผู้แจ้ง: {r.reported_by}{r.reporter_phone ? ` · ${r.reporter_phone}` : ''}</p>
+                      {r.resolved_note && (
+                        <p className="text-xs text-green-700 bg-green-50 rounded px-2 py-1 mt-2">หมายเหตุ: {r.resolved_note}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add / Edit Modal */}
       {open && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -327,7 +399,12 @@ export function EquipmentManager({ types, rooms, equipment: initial }: Props) {
               paginated.map((eq: any) => (
                 <tr key={eq.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{eq.name}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{eq.asset_code}</td>
+                  <td className="px-4 py-3">
+                    <button type="button" onClick={() => openRepairs(eq)}
+                      className="font-mono text-xs text-blue-600 hover:text-blue-800 hover:underline underline-offset-2">
+                      {eq.asset_code}
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-gray-500">{eq.equipment_type?.name}</td>
                   <td className="px-4 py-3 text-gray-500">{eq.room?.building?.name} · {eq.room?.code}</td>
                   <td className="px-4 py-3 text-gray-400 text-xs font-mono">{eq.serial_number ?? '-'}</td>

@@ -6,6 +6,7 @@ import { sendPushToAll } from '@/lib/webpush'
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const roomId = searchParams.get('roomId')
+  const equipmentId = searchParams.get('equipmentId')
   const status = searchParams.get('status')
   const supabase = createServiceClient()
 
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
 
   if (roomId) query = query.eq('room_id', roomId)
+  if (equipmentId) query = query.eq('equipment_id', equipmentId)
   if (status) query = query.eq('status', status)
 
   const { data, error } = await query
