@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     .from('equipment_inspections')
     .select(`
       id, status, comment, photo_url, inspected_at, inspected_by,
-      equipment:equipment ( id, name, asset_code )
+      equipment:equipment ( id, name, asset_code, retired_at )
     `)
     .order('inspected_at', { ascending: false })
     .limit(200)
@@ -21,8 +21,11 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // กรองอุปกรณ์ที่จำหน่ายออกแล้วออก
+  const activeOnly = (data as any[]).filter((r) => r.equipment?.retired_at === null || r.equipment?.retired_at === undefined)
+
   // Resolve inspected_by UUID → display name via auth admin API
-  const uniqueIds = [...new Set((data as any[]).map((r) => r.inspected_by).filter(Boolean))]
+  const uniqueIds = [...new Set(activeOnly.map((r) => r.inspected_by).filter(Boolean))]
   const nameMap: Record<string, string> = {}
 
   if (uniqueIds.length > 0) {
@@ -32,7 +35,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const withNames = (data as any[]).map((r) => ({
+  const withNames = activeOnly.map((r) => ({
     ...r,
     inspector_name: r.inspected_by ? (nameMap[r.inspected_by] ?? null) : null,
   }))

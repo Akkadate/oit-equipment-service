@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     .from('repair_requests')
     .select(`
       id, reported_by, reporter_phone, description, status, resolved_note, resolved_by, photo_url, created_at, updated_at,
-      equipment:equipment ( id, name, asset_code ),
+      equipment:equipment ( id, name, asset_code, retired_at ),
       room:rooms ( id, code, name, building:buildings ( id, code, name, campus:campuses ( id, name, sort_order ) ) )
     `)
     .order('created_at', { ascending: false })
@@ -23,7 +23,10 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  // กรองอุปกรณ์ที่จำหน่ายออกแล้วออก
+  const activeOnly = (data as any[]).filter((r) => r.equipment?.retired_at === null || r.equipment?.retired_at === undefined)
+  return NextResponse.json(activeOnly)
 }
 
 export async function POST(req: NextRequest) {
