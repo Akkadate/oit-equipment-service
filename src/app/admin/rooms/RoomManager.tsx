@@ -93,7 +93,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
     toast.success('ลบห้องแล้ว')
   }
 
-  async function handleBatchPrint() {
+  async function handleBatchPrint(size: 'A4' | 'A3') {
     if (rooms.length === 0) return
     setBatchLoading(true)
     try {
@@ -113,7 +113,7 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
         )
       )
 
-      // Build print HTML — 3 columns on A4
+      const cols = size === 'A3' ? 4 : 3
       const items = composites
         .map((src) => `<div class="qr-item"><img src="${src}" alt="QR" /></div>`)
         .join('')
@@ -127,11 +127,11 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
       win.document.write(`<!DOCTYPE html>
 <html><head>
   <meta charset="utf-8" />
-  <title>QR Codes ทั้งหมด</title>
+  <title>QR Codes ทั้งหมด (${size})</title>
   <style>
-    @page { size: A4; margin: 10mm; }
+    @page { size: ${size}; margin: 10mm; }
     body { font-family: sans-serif; margin: 0; padding: 0; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; }
+    .grid { display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 6mm; }
     .qr-item { break-inside: avoid; text-align: center; }
     .qr-item img { width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 4px; }
   </style>
@@ -150,14 +150,24 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <button
-          type="button"
-          onClick={handleBatchPrint}
-          disabled={batchLoading || rooms.length === 0}
-          className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
-        >
-          {batchLoading ? 'กำลังโหลด QR...' : `พิมพ์ QR ทั้งหมด (${rooms.length})`}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleBatchPrint('A4')}
+            disabled={batchLoading || rooms.length === 0}
+            className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
+          >
+            {batchLoading ? 'กำลังโหลด QR...' : `พิมพ์ QR A4 (${rooms.length})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleBatchPrint('A3')}
+            disabled={batchLoading || rooms.length === 0}
+            className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40"
+          >
+            {batchLoading ? 'กำลังโหลด QR...' : `พิมพ์ QR A3 (${rooms.length})`}
+          </button>
+        </div>
         <button
           type="button"
           onClick={openAdd}
