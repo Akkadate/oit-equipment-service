@@ -113,7 +113,16 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
         )
       )
 
-      const cols = size === 'A3' ? 4 : 3
+      // A4: margin 10mm → printable 190mm → 4×45mm + 3×3mm = 189mm ✓
+      // A3: margin  6mm → printable 285mm → 6×45mm + 5×3mm = 285mm ✓
+      const isA3 = size === 'A3'
+      const cols   = isA3 ? 6 : 4
+      const margin = isA3 ? '6mm' : '10mm'
+      // fixed item size: 4.5cm × 6.3cm, gap: 0.3cm
+      const itemW  = '45mm'
+      const itemH  = '63mm'
+      const gap    = '3mm'
+
       const items = composites
         .map((src) => `<div class="qr-item"><img src="${src}" alt="QR" /></div>`)
         .join('')
@@ -129,11 +138,28 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
   <meta charset="utf-8" />
   <title>QR Codes ทั้งหมด (${size})</title>
   <style>
-    @page { size: ${size}; margin: 10mm; }
-    body { font-family: sans-serif; margin: 0; padding: 0; }
-    .grid { display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 6mm; }
-    .qr-item { break-inside: avoid; text-align: center; }
-    .qr-item img { width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 4px; }
+    @page { size: ${size} portrait; margin: ${margin}; }
+    body { margin: 0; padding: 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(${cols}, ${itemW});
+      gap: ${gap};
+      align-content: start;
+    }
+    .qr-item {
+      width: ${itemW};
+      height: ${itemH};
+      overflow: hidden;
+      break-inside: avoid;
+    }
+    .qr-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border: 1px solid #e5e7eb;
+      border-radius: 3px;
+      display: block;
+    }
   </style>
 </head>
 <body>
