@@ -2,6 +2,10 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface Campus {
   id: string
@@ -22,6 +26,9 @@ export function CampusManager({ campuses: initial }: Props) {
   const [name, setName] = useState('')
   const [sortOrder, setSortOrder] = useState('99')
   const [loading, setLoading] = useState(false)
+
+  const [deleteTarget, setDeleteTarget] = useState<Campus | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   function openAdd() {
     setEditing(null)
@@ -76,19 +83,47 @@ export function CampusManager({ campuses: initial }: Props) {
     }
   }
 
-  async function handleDelete(c: Campus) {
-    if (!confirm(`ลบวิทยาเขต "${c.name}" ใช่ไหม?\n(อาคารและห้องในวิทยาเขตนี้จะถูกลบด้วย)`)) return
-    const res = await fetch(`/api/campuses/${c.id}`, { method: 'DELETE' })
-    if (!res.ok) {
-      toast.error('ลบไม่สำเร็จ')
-      return
+  async function executeDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/campuses/${deleteTarget.id}`, { method: 'DELETE' })
+      if (!res.ok) { toast.error('ลบไม่สำเร็จ'); return }
+      setCampuses((prev) => prev.filter((x) => x.id !== deleteTarget.id))
+      toast.success('ลบวิทยาเขตแล้ว')
+      setDeleteTarget(null)
+    } finally {
+      setDeleting(false)
     }
-    setCampuses((prev) => prev.filter((x) => x.id !== c.id))
-    toast.success('ลบวิทยาเขตแล้ว')
   }
 
   return (
     <div>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">ยืนยันการลบวิทยาเขต</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>คุณต้องการลบวิทยาเขตนี้ออกจากระบบใช่ไหม?</p>
+                <div className="bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  <p className="font-medium text-gray-900">{deleteTarget?.name}</p>
+                  <p className="text-xs text-gray-500 font-mono mt-0.5">{deleteTarget?.code}</p>
+                </div>
+                <p className="text-red-600 text-xs">⚠️ อาคารและห้องทั้งหมดในวิทยาเขตนี้จะถูกลบด้วย</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDelete} disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600">
+              {deleting ? 'กำลังลบ...' : 'ลบถาวร'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex justify-end mb-4">
         <button
           onClick={openAdd}
@@ -180,14 +215,14 @@ export function CampusManager({ campuses: initial }: Props) {
                   <td className="px-4 py-3 font-medium">{c.name}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <button
+                      <button type="button"
                         onClick={() => openEdit(c)}
                         className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-200 rounded hover:bg-blue-50"
                       >
                         แก้ไข
                       </button>
-                      <button
-                        onClick={() => handleDelete(c)}
+                      <button type="button"
+                        onClick={() => setDeleteTarget(c)}
                         className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50"
                       >
                         ลบ

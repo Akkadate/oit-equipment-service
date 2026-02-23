@@ -2,6 +2,10 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface EquipmentType {
   id: number
@@ -18,6 +22,9 @@ export function EquipmentTypeManager({ types: initial }: Props) {
   const [editing, setEditing] = useState<EquipmentType | null>(null)
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const [deleteTarget, setDeleteTarget] = useState<EquipmentType | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   function openAdd() {
     setEditing(null)
@@ -62,20 +69,50 @@ export function EquipmentTypeManager({ types: initial }: Props) {
     }
   }
 
-  async function handleDelete(t: EquipmentType) {
-    if (!confirm(`ลบประเภท "${t.name}" ใช่ไหม?\n(อุปกรณ์ที่ใช้ประเภทนี้จะไม่สามารถลบได้ถ้ายังมีข้อมูล)`)) return
-    const res = await fetch(`/api/equipment-types/${t.id}`, { method: 'DELETE' })
-    if (!res.ok) {
-      const err = await res.json()
-      toast.error(err.error ?? 'ลบไม่สำเร็จ')
-      return
+  async function executeDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/equipment-types/${deleteTarget.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const err = await res.json()
+        toast.error(err.error ?? 'ลบไม่สำเร็จ')
+        return
+      }
+      setTypes((prev) => prev.filter((x) => x.id !== deleteTarget.id))
+      toast.success('ลบประเภทอุปกรณ์แล้ว')
+      setDeleteTarget(null)
+    } finally {
+      setDeleting(false)
     }
-    setTypes((prev) => prev.filter((x) => x.id !== t.id))
-    toast.success('ลบประเภทอุปกรณ์แล้ว')
   }
 
   return (
     <div>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">ยืนยันการลบประเภทอุปกรณ์</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>คุณต้องการลบประเภทอุปกรณ์นี้ออกจากระบบใช่ไหม?</p>
+                <div className="bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  <p className="font-medium text-gray-900">{deleteTarget?.name}</p>
+                </div>
+                <p className="text-orange-600 text-xs">⚠️ ไม่สามารถลบได้หากยังมีอุปกรณ์ที่ใช้ประเภทนี้อยู่</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDelete} disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600">
+              {deleting ? 'กำลังลบ...' : 'ลบถาวร'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex justify-end mb-4">
         <button
           type="button"
@@ -146,16 +183,14 @@ export function EquipmentTypeManager({ types: initial }: Props) {
                   <td className="px-4 py-3 font-medium">{t.name}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <button
-                        type="button"
+                      <button type="button"
                         onClick={() => openEdit(t)}
                         className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-200 rounded hover:bg-blue-50"
                       >
                         แก้ไข
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(t)}
+                      <button type="button"
+                        onClick={() => setDeleteTarget(t)}
                         className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50"
                       >
                         ลบ
