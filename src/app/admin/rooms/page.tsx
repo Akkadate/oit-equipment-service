@@ -14,6 +14,7 @@ async function getData() {
         building:buildings(id, code, name, campus:campuses(id, code, name)),
         equipment_count:equipment(count)
       `)
+      .is('equipment.retired_at', null)
       .order('code'),
     supabase
       .from('buildings')
