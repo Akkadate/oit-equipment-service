@@ -213,8 +213,8 @@ export function RoomManager({ rooms: initial, buildings }: Props) {
 
       {/* Sheet drawer — add / edit */}
       <Sheet open={showForm} onOpenChange={setShowForm}>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader className="mb-6">
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto px-6 pb-8">
+          <SheetHeader className="px-0 pb-2 mb-4">
             <SheetTitle>{editing ? 'แก้ไขห้องเรียน' : 'เพิ่มห้องเรียน'}</SheetTitle>
           </SheetHeader>
           <form onSubmit={handleSubmit} className="space-y-5">
