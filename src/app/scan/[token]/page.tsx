@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { internalUrl } from '@/lib/equipment'
+import { ChatbotWidget } from '@/components/shared/ChatbotWidget'
 
 function shortDate(iso: string) {
   const d = new Date(iso)
@@ -125,6 +126,9 @@ export default async function ScanLandingPage({
           ))}
         </div>
       )}
+
+      {/* Chatbot floating widget */}
+      <ChatbotWidget />
     </div>
   )
 }
