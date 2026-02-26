@@ -20,6 +20,7 @@ const adminLinks = [
   { href: '/admin/rooms', label: 'ห้องเรียน / QR' },
   { href: '/admin/buildings', label: 'อาคาร' },
   { href: '/admin/campuses', label: 'วิทยาเขต' },
+  { href: '/admin/chatbot', label: '🤖 Chatbot' },
 ]
 
 const allLinks = [...mainLinks.map(l => ({ href: l.href, label: l.label })), ...adminLinks]
